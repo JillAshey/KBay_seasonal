@@ -1,0 +1,1144 @@
+---
+title: "Temperature"
+author: "Jill Ashey"
+date: "2025-08-14"
+output: html_document
+---
+
+Plot temperature from Patch Reef 13 in KBay
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(readr)
+library(tidyverse)
+library(lubridate)
+library(purrr)
+library(zoo)
+library(scales)
+library(patchwork)
+```
+
+Read in data from 2013-2023 (data obtained from Brown et al. 2023 - https://www.bco-dmo.org/dataset/905047)
+```{r}
+temps <- read.csv("../data/environmental/905047_v1_infield_temp.csv", header = T)
+```
+
+Format date and time for data from 2013-2023
+```{r}
+# Create a date column for plotting
+temps <- temps %>%
+  mutate(date = as.Date(paste(year, month, day, sep = "-")))
+
+# Plot
+ggplot(temps, aes(x = date, y = Temperature, color = Site)) +
+  geom_point() +
+  labs(x = "Time (UTC)",y = "Temperature (°C)") +
+  theme_minimal()
+```
+
+Calculate DHW
+```{r}
+MMM <- 27.3
+threshold <- MMM + 1 # 28.3
+
+daily_mean <- temps %>%
+  group_by(year, month, day) %>%
+  dplyr::summarize(daily_temp_mean = mean(Temperature, na.rm = T)) %>%
+  ungroup() %>%
+  dplyr::arrange(year, month, day) %>%
+  mutate(
+    date = as.Date(paste(year, month, day, sep = "-")),
+    HS = ifelse(daily_temp_mean >= threshold, daily_temp_mean - MMM, 0)
+  )
+
+# Check if dates are continuous:
+date_seq <- seq(min(daily_mean$date), max(daily_mean$date), by = "day")
+missing_dates <- setdiff(date_seq, daily_mean$date)
+
+if(length(missing_dates) > 0) {
+  # Fill missing dates with HS = 0, daily_temp_mean = NA or interpolated
+  missing_df <- data.frame(
+    year = as.integer(format(missing_dates, "%Y")),
+    month = as.integer(format(missing_dates, "%m")),
+    day = as.integer(format(missing_dates, "%d")),
+    daily_temp_mean = NA,
+    date = missing_dates,
+    HS = 0
+  )
+  daily_mean <- bind_rows(daily_mean, missing_df) %>%
+    arrange(date)
+}
+
+# Now compute rolling DHW (90-day window)
+daily_mean <- daily_mean %>%
+  mutate(DHW = rollapply(HS / 7, width = 90, sum, align = "right", fill = NA))
+
+```
+
+Plot! 
+```{r}
+# Define your MMM and bleaching thresholds
+MMM <- 27.3
+bleaching_threshold <- MMM + 1 # 28.3
+
+# Create a date column for plotting
+daily_mean <- daily_mean %>%
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(DHW = ifelse(is.na(DHW), 0, DHW))
+
+# scale constants (temp 20–30, DHW 0–10)
+temp_min <- 20
+temp_max <- 30
+dhw_min  <- 0
+dhw_max  <- 10
+
+# scaling factor
+scale_factor <- (temp_max - temp_min) / (dhw_max - dhw_min)
+
+ggplot(daily_mean, aes(x = date)) +
+  geom_line(aes(y = daily_temp_mean, color = "Temperature"), linewidth = 0.8) +
+  geom_line(aes(y = DHW * scale_factor + temp_min, color = "DHW"), linewidth = 0.8, alpha = 0.8) +
+  scale_y_continuous(
+    name = "Daily Temperature (°C)",
+    limits = c(temp_min, temp_max),
+    sec.axis = sec_axis(
+      ~ (. - temp_min) / scale_factor,
+      name = "Degree Heating Weeks (°C-weeks)",
+      breaks = seq(0, 10, 2)
+    )
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Temperature" = "steelblue", "DHW" = "firebrick")
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.title.y.left  = element_text(color = "steelblue"),
+    axis.title.y.right = element_text(color = "firebrick"),
+    legend.position = "top"
+  )
+```
+
+Plot with the points from temps
+```{r}
+MMM <- 27.3
+threshold <- MMM + 1
+
+# Prepare daily_mean with date
+daily_mean <- daily_mean %>% 
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(datetime = as.POSIXct(date, format = "%Y-%m-%d", tz = "UTC"))
+
+# Prepare hourly temps with POSIXct datetime
+temps <- temps %>%
+  mutate(
+    datetime = make_datetime(year = year, month = month, day = day, hour = hour, min = 0, sec = 0, tz = "UTC"))
+
+# Plot
+ggplot() +
+  # Hourly temperatures as light blue semi-transparent dots
+  geom_point(data = temps, aes(x = datetime, y = Temperature), color = "grey60", alpha = 0.3, size = 0.5) +
+  
+  # Daily mean temperature as black line
+  geom_line(data = daily_mean, aes(x = datetime, y = daily_temp_mean, color = "Temperature"), color = "black", linewidth = 0.8) +
+  
+  # DHW as gray line scaled to temperature y-axis limits (20-30)
+  geom_line(data = daily_mean, aes(x = datetime, 
+                                   y = DHW * (30 - 20) / (10 - 0) + 20), 
+            color = "firebrick", size = 1, alpha = 0.7) +
+  
+  # Horizontal lines for MMM and Bleaching Threshold
+  geom_hline(yintercept = MMM, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = threshold, linetype = "solid", color = "black") +
+  
+  # Primary y-axis limits and secondary axis that maps 20-30 temp to 0-10 DHW
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      trans = ~ (. - 20) * 10 / (30 - 20),
+      name = "Degree Heating Weeks (°C wk⁻¹)",
+      breaks = seq(0, 10, 1)
+    )
+  ) +
+  theme_minimal()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Read in data from hobo loggers from NSF CAREER project. These are all in different formats so they need to be read in and processed differently. 
+```{r}
+# Sept 2022 - April 2023 
+sept22_apr23_21152005 <- read.csv("../data/environmental/2022-Sept_2023-April_Reef13_1m_21152005.csv")
+sept22_apr23_21152005 <- sept22_apr23_21152005 %>%
+  mutate(DateTime = dmy_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+sept22_apr23_21152007 <- read.csv("../data/environmental/2022-Sept_2023-April_Reef13_1m_21152007.csv")
+sept22_apr23_21152007 <- sept22_apr23_21152007 %>%
+  mutate(DateTime = dmy_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+sept22_apr23_21152009 <- read.csv("../data/environmental/2022-Sept_2023-April_Reef13_3m_21152009.csv")
+sept22_apr23_21152009 <- sept22_apr23_21152009 %>%
+  mutate(DateTime = dmy_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+sept22_apr23 <- rbind(sept22_apr23_21152005, sept22_apr23_21152007, sept22_apr23_21152009)
+ggplot(sept22_apr23, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# Apr 2023 - Sept 2023
+apr23_sept_23_21152007_3m <- read.csv("../data/environmental/2023-04-14_to_2023-09-19_21152007_Reef13_3m.csv", header = T)
+apr23_sept_23_21152007_3m <- apr23_sept_23_21152007_3m %>%
+  mutate(DateTime = ymd_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+apr23_sept_23_21152007_1m <- read.csv("../data/environmental/2023-04-14_to_2023-09-19_21152007_Reef13_1m.csv", header = F, skip = 1)
+apr23_sept_23_21152007_1m <- apr23_sept_23_21152007_1m %>%
+  mutate(DateTime = ymd_hms(paste(V1, V2)),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+apr23_sept23 <- rbind(apr23_sept_23_21152007_3m, apr23_sept_23_21152007_1m)
+ggplot(apr23_sept23, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# Sept 2023 - Jan 2024
+sept23_jan24_21152005 <- read.csv("../data/environmental/Sept2023_Jan2024_Reef13_insitu_temp_21152005_3m.csv", header = F, skip = 1) %>%
+  na.omit()
+sept23_jan24_21152005 <- sept23_jan24_21152005 %>%
+  mutate(DateTime = dmy_hms(paste(V1, V2)),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+sept23_jan24_21152007 <- read.csv("../data/environmental/Sept2023_Jan2024_Reef13_insitu_temp_21152007_1m.csv", header = F, skip = 1) %>%
+  na.omit()
+sept23_jan24_21152007 <- sept23_jan24_21152007 %>%
+  mutate(DateTime = dmy_hms(paste(V1, V2)),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+sept23_jan24_21152009 <- read.csv("../data/environmental/Sept2023_Jan2024_Reef13_insitu_temp_21152009_1m.csv", header = F, skip = 1) %>%
+  na.omit()
+sept23_jan24_21152009 <- sept23_jan24_21152009 %>%
+  mutate(DateTime = dmy_hms(paste(V1, V2)),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+sept23_jan24 <- rbind(sept23_jan24_21152005, sept23_jan24_21152007, sept23_jan24_21152009)
+ggplot(sept23_jan24, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# Jan 2024 - May 2024
+jan24_may24_21152005 <- read.csv("../data/environmental/2024-05-09_Kbay_21152005.csv", header = F, skip = 1) %>%
+  na.omit()
+jan24_may24_21152005 <- jan24_may24_21152005 %>%
+  mutate(DateTime = mdy_hm(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+jan24_may24_21152007 <- read.csv("../data/environmental/2024-05-08_Kbay_21152007.csv", header = F, skip = 1) %>%
+  na.omit()
+jan24_may24_21152007 <- jan24_may24_21152007 %>%
+  mutate(DateTime = mdy_hm(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+jan24_may24_21152009 <- read.csv("../data/environmental/2024-05-09_Kbay_21152009.csv", header = F, skip = 1) %>%
+  na.omit()
+jan24_may24_21152009 <- jan24_may24_21152009 %>%
+  mutate(DateTime = mdy_hm(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+jan24_may24 <- rbind(jan24_may24_21152005, jan24_may24_21152007, jan24_may24_21152009)
+ggplot(jan24_may24, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# May 2024 - Sept 2024
+may24_sept24_21152005 <- read.csv("../data/environmental/2024-09-30_Reef13_21152005.csv", skip = 2, header = F)
+may24_sept24_21152005 <- may24_sept24_21152005 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+may24_sept24_21152007 <- read.csv("../data/environmental/2024-09-30_Reef13_21152007.csv", skip = 2, header = F)
+may24_sept24_21152007 <- may24_sept24_21152007 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+may24_sept24_21152009 <- read.csv("../data/environmental/2024-09-30_Reef13_21152009.csv", skip = 2, header = F)
+may24_sept24_21152009 <- may24_sept24_21152009 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+may24_sept24 <- rbind(may24_sept24_21152005, may24_sept24_21152007, may24_sept24_21152009)
+ggplot(may24_sept24, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# Oct 2024 - Jan 2025
+oct24_jan25_21152005 <- read.csv("../data/environmental/Jan2025_KBay_21152005.csv", header = F, skip = 1)
+oct24_jan25_21152005 <- oct24_jan25_21152005 %>%
+  mutate(DateTime = mdy_hm(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+oct24_jan25_21152007 <- read.csv("../data/environmental/Jan2025_KBay_21152007.csv", header = F, skip = 1)
+oct24_jan25_21152007 <- oct24_jan25_21152007 %>%
+  mutate(DateTime = mdy_hm(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+oct24_jan25_21152009 <- read.csv("../data/environmental/Jan2025_KBay_21152009.csv", header = F, skip = 1)
+oct24_jan25_21152009 <- oct24_jan25_21152009 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+oct24_jan25 <- rbind(oct24_jan25_21152005, oct24_jan25_21152007, oct24_jan25_21152009)
+ggplot(oct24_jan25, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# Jan 2025 - May 2025
+jan25_may25_21152005 <- read.csv("../data/environmental/21152005.csv", header = T)
+jan25_may25_21152005 <- jan25_may25_21152005 %>%
+  mutate(DateTime = mdy_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+jan25_may25_21152007 <- read.csv("../data/environmental/21152007.csv", header = T)
+jan25_may25_21152007 <- jan25_may25_21152007 %>%
+  mutate(DateTime = mdy_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+jan25_may25_21152009 <- read.csv("../data/environmental/21152009.csv", header = T)
+jan25_may25_21152009 <- jan25_may25_21152009 %>%
+  mutate(DateTime = mdy_hms(paste(Date, Time..GMT.10.00)),
+         Temp_C = Temp...C) %>%
+  dplyr::select(DateTime, Temp_C)
+
+jan25_may25 <- rbind(jan25_may25_21152005, jan25_may25_21152007, jan25_may25_21152009)
+ggplot(oct24_jan25, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# May 2025 - Oct 2025 - lost one of the U22 loggers on the reef (21152005)
+may25_oct25_21152007 <- read.csv("../data/environmental/Oct2025_21152007.csv", skip = 2, header = F)
+may25_oct25_21152007 <- may25_oct25_21152007 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+may25_oct25_21152009 <- read.csv("../data/environmental/Oct2025_21152009.csv", skip = 2, header = F)
+may25_oct25_21152009 <- may25_oct25_21152009 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+may25_oct25 <- rbind(may25_oct25_21152007, may25_oct25_21152009)
+may25_oct25 <- may25_oct25 %>% # remove times when logger was out of water 
+  mutate(DateTime = ymd_hms(DateTime)) %>%
+  filter(DateTime >= ymd("2025-05-13"),
+         DateTime <= ymd_hms("2025-10-01 08:30:00"))
+ggplot(may25_oct25, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+
+# Oct 2025 - Jan 2026
+oct25_jan26_21152007 <- read.csv("../data/environmental/Jan2026_21152007.csv", skip = 2, header = F)
+oct25_jan26_21152007 <- oct25_jan26_21152007 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+oct25_jan26_21152009 <- read.csv("../data/environmental/Jan2026_21152009.csv", skip = 2, header = F)
+oct25_jan26_21152009 <- oct25_jan26_21152009 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+oct25_jan26_20947172 <- read.csv("../data/environmental/Jan2026_20947172.csv", skip = 2, header = F)
+oct25_jan26_20947172 <- oct25_jan26_20947172 %>%
+  mutate(DateTime = mdy_hms(V2),
+         Temp_C = V3) %>%
+  dplyr::select(DateTime, Temp_C)
+
+oct25_jan26 <- rbind(oct25_jan26_21152007, oct25_jan26_21152009, oct25_jan26_20947172)
+oct25_jan26 <- oct25_jan26 %>% # remove times when logger was out of water 
+  mutate(DateTime = ymd_hms(DateTime)) %>%
+  filter(DateTime >= ymd("2025-10-14"),
+         DateTime <= ymd_hms("2026-01-20 08:30:00"))
+ggplot(oct25_jan26, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+```
+
+Bind all data together, save and plot 
+```{r}
+all_data <- rbind(sept22_apr23, apr23_sept23, sept23_jan24, jan24_may24, may24_sept24, oct24_jan25, jan25_may25, may25_oct25, oct25_jan26)
+
+# Write csv
+write.csv(all_data, "../output/environmental/NSF_CAREER_KBay_PR13_Temps.csv")
+
+ggplot(all_data, aes(x = DateTime, y = Temp_C)) +
+  geom_point() +
+  scale_x_datetime( date_breaks = "1 month", date_labels = "%b") + 
+  theme_minimal() +
+  labs(y = "Temperature (°C)", x = "Time")
+```
+
+Separate out year, month and day 
+```{r}
+all_data <- all_data %>%
+  mutate(
+    year = year(DateTime),
+    month = month(DateTime),
+    day = day(DateTime),
+    hour = hour(DateTime))
+```
+
+Calculate DHW
+```{r}
+daily_mean_nsf <- all_data %>%
+  dplyr::group_by(year, month, day) %>%
+  dplyr::summarize(daily_temp_mean = mean(Temp_C, na.rm = TRUE), .groups = "drop") %>% 
+  dplyr::arrange(year, month, day) %>%
+  dplyr::mutate(
+    date = as.Date(paste(year, month, day, sep = "-")),
+    HS = ifelse(daily_temp_mean >= threshold, daily_temp_mean - MMM, 0)
+  )
+
+# Check if dates are continuous:
+date_seq <- seq(min(daily_mean_nsf$date), max(daily_mean_nsf$date), by = "day")
+missing_dates <- setdiff(date_seq, daily_mean_nsf$date)
+
+if(length(missing_dates) > 0) {
+  # Fill missing dates with HS = 0, daily_temp_mean = NA or interpolated
+  missing_df <- data.frame(
+    year = as.integer(format(missing_dates, "%Y")),
+    month = as.integer(format(missing_dates, "%m")),
+    day = as.integer(format(missing_dates, "%d")),
+    daily_temp_mean = NA,
+    date = missing_dates,
+    HS = 0
+  )
+  daily_mean_nsf <- bind_rows(daily_mean_nsf, missing_df) %>%
+    arrange(date)
+}
+
+# Now compute rolling DHW (90-day window)
+daily_mean_nsf <- daily_mean_nsf %>%
+  mutate(DHW = rollapply(HS / 7, width = 90, sum, align = "right", fill = NA))
+```
+
+Plot! 
+```{r}
+# Define your MMM and bleaching thresholds
+MMM <- 27.3
+threshold <- MMM + 1 # 28.3
+
+# Create a date column for plotting
+daily_mean_nsf <- daily_mean_nsf %>%
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(DHW = ifelse(is.na(DHW), 0, DHW))
+
+# scale constants (temp 20–30, DHW 0–10)
+temp_min <- 20
+temp_max <- 30
+dhw_min  <- 0
+dhw_max  <- 10
+
+# scaling factor
+scale_factor <- (temp_max - temp_min) / (dhw_max - dhw_min)
+
+ggplot(daily_mean_nsf, aes(x = date)) +
+  geom_line(aes(y = daily_temp_mean, color = "Temperature"), linewidth = 0.8) +
+  geom_line(aes(y = DHW * scale_factor + temp_min, color = "DHW"), linewidth = 0.8, alpha = 0.8) +
+  scale_y_continuous(
+    name = "Daily Temperature (°C)",
+    limits = c(temp_min, temp_max),
+    sec.axis = sec_axis(
+      ~ (. - temp_min) / scale_factor,
+      name = "Degree Heating Weeks (°C-weeks)",
+      breaks = seq(0, 10, 2)
+    )
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Temperature" = "steelblue", "DHW" = "firebrick")
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.title.y.left  = element_text(color = "steelblue"),
+    axis.title.y.right = element_text(color = "firebrick"),
+    legend.position = "top"
+  )
+```
+
+Plot with the points from hourly data
+```{r}
+MMM <- 27.3
+threshold <- MMM + 1
+
+# Prepare daily_mean with date
+daily_mean_nsf <- daily_mean_nsf %>% 
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(datetime = as.POSIXct(date, format = "%Y-%m-%d", tz = "UTC"))
+
+# Prepare hourly temps with POSIXct datetime
+all_data$year <- as.integer(all_data$year)
+all_data$month <- as.integer(all_data$month)
+all_data <- all_data %>%
+  mutate(
+    datetime = make_datetime(year = year, month = month, day = day, hour = hour, tz = "UTC"))
+
+# Plot
+ggplot() +
+  # Hourly temperatures as light blue semi-transparent dots
+  geom_point(data = all_data, aes(x = datetime, y = Temp_C), color = "grey60", alpha = 0.3, size = 0.5) +
+  
+  # Daily mean temperature as black line
+  geom_line(data = daily_mean_nsf, aes(x = datetime, y = daily_temp_mean, color = "Temperature"), color = "black", linewidth = 0.8) +
+  
+  # DHW as gray line scaled to temperature y-axis limits (20-30)
+  geom_line(data = daily_mean_nsf, aes(x = datetime, 
+                                   y = DHW * (30 - 20) / (10 - 0) + 20), 
+            color = "firebrick", size = 1, alpha = 0.7) +
+  
+  # Horizontal lines for MMM and Bleaching Threshold
+  geom_hline(yintercept = MMM, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = threshold, linetype = "solid", color = "black") +
+  
+  # Primary y-axis limits and secondary axis that maps 20-30 temp to 0-10 DHW
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      trans = ~ (. - 20) * 10 / (30 - 20),
+      name = "Degree Heating Weeks (°C/week)",
+      breaks = seq(0, 10, 1)
+    )
+  ) +
+  theme_minimal()
+```
+
+
+### Combine 
+
+Select and rename specific cols 
+```{r}
+temps_sub <- temps %>%
+  dplyr::select(Temperature, hour, year, day, month, datetime) %>%
+  dplyr::rename(Temperature = Temperature,  # already named correctly, just for clarity
+         hour = hour,
+         year = year,
+         month = month,
+         day = day,
+         datetime = datetime)
+
+all_data_sub <- all_data %>%
+  dplyr::rename(Temperature = Temp_C) %>%
+  dplyr::select(Temperature, hour, year, month, day, datetime)
+
+# Reorder columns in temps_sub to match all_data_sub
+temps_sub <- temps_sub %>%
+  dplyr::select(Temperature, hour, year, month, day, datetime)
+
+# Bind
+combined_data <- bind_rows(temps_sub, all_data_sub)
+```
+
+Calculate DHW
+```{r}
+daily_mean <- combined_data %>%
+  group_by(year, month, day) %>%
+  dplyr::summarize(daily_temp_mean = mean(Temperature, na.rm = T)) %>%
+  ungroup() %>%
+  dplyr::arrange(year, month, day) %>%
+  mutate(
+    date = as.Date(paste(year, month, day, sep = "-")),
+    HS = ifelse(daily_temp_mean >= threshold, daily_temp_mean - MMM, 0)
+  )
+
+# Check if dates are continuous:
+date_seq <- seq(min(daily_mean$date), max(daily_mean$date), by = "day")
+missing_dates <- setdiff(date_seq, daily_mean$date)
+
+if(length(missing_dates) > 0) {
+  # Fill missing dates with HS = 0, daily_temp_mean = NA or interpolated
+  missing_df <- data.frame(
+    year = as.integer(format(missing_dates, "%Y")),
+    month = as.integer(format(missing_dates, "%m")),
+    day = as.integer(format(missing_dates, "%d")),
+    daily_temp_mean = NA,
+    date = missing_dates,
+    HS = 0
+  )
+  daily_mean <- bind_rows(daily_mean, missing_df) %>%
+    arrange(date)
+}
+
+# Now compute rolling DHW (90-day window)
+daily_mean <- daily_mean %>%
+  mutate(DHW = rollapply(HS / 7, width = 90, sum, align = "right", fill = NA))
+```
+
+Plot! 
+```{r}
+# Define your MMM and bleaching thresholds
+MMM <- 27.3
+threshold <- MMM + 1 # 28.3
+
+# Create a date column for plotting
+daily_mean <- daily_mean %>%
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(DHW = ifelse(is.na(DHW), 0, DHW))
+
+# scale constants (temp 20–30, DHW 0–10)
+temp_min <- 20
+temp_max <- 30
+dhw_min  <- 0
+dhw_max  <- 10
+
+# scaling factor
+scale_factor <- (temp_max - temp_min) / (dhw_max - dhw_min)
+
+ggplot(daily_mean, aes(x = date)) +
+  geom_line(aes(y = daily_temp_mean, color = "Temperature"), linewidth = 0.8) +
+  geom_line(aes(y = DHW * scale_factor + temp_min, color = "DHW"), linewidth = 0.8, alpha = 0.8) +
+  scale_y_continuous(
+    name = "Daily Temperature (°C)",
+    limits = c(temp_min, temp_max),
+    sec.axis = sec_axis(
+      ~ (. - temp_min) / scale_factor,
+      name = "Degree Heating Weeks (°C-weeks)",
+      breaks = seq(0, 10, 2)
+    )
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Temperature" = "steelblue", "DHW" = "firebrick")
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.title.y.left  = element_text(color = "steelblue"),
+    axis.title.y.right = element_text(color = "firebrick"),
+    legend.position = "top"
+  )
+```
+
+Plot with the points from temps
+```{r}
+MMM <- 27.3
+threshold <- MMM + 1
+
+# Prepare daily_mean with date
+daily_mean <- daily_mean %>% 
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(datetime = as.POSIXct(date, format = "%Y-%m-%d", tz = "UTC"))
+
+# Prepare hourly temps with POSIXct datetime
+combined_data <- combined_data %>%
+  mutate(
+    datetime = make_datetime(year = year, month = month, day = day, hour = hour, min = 0, sec = 0, tz = "UTC"))
+
+# Make df of sampling dates to mark on plot 
+sample_dates <- data.frame(
+  datetime = as.POSIXct(c("2023-09-14 00:00", "2025-10-01 00:00")),
+  sample_id = c("Sept2023", "Oct2025"))
+
+# Plot
+whole_plot <- ggplot() +
+  # Hourly temperatures as light semi-transparent dots
+  geom_point(data = combined_data, aes(x = datetime, y = Temperature), color = "grey60", alpha = 0.3, size = 2) +
+  
+  # Daily mean temperature as black line
+  geom_line(data = daily_mean, aes(x = datetime, y = daily_temp_mean, color = "Temperature"), color = "black", linewidth = 3) +
+  
+  # DHW as gray line scaled to temperature y-axis limits (20-30)
+  geom_line(data = daily_mean, aes(x = datetime, 
+                                   y = DHW * (30 - 20) / (10 - 0) + 20), 
+            color = "firebrick", size = 2.5, alpha = 0.6) +
+  
+  # Horizontal lines for MMM and Bleaching Threshold
+  geom_hline(yintercept = MMM, linetype = "dashed", color = "black", size = 2.5) +
+  geom_hline(yintercept = threshold, linetype = "solid", color = "black", size = 2.5) +
+  geom_point(data = sample_dates, aes(x = datetime, y = 29), shape = 23, fill = "blue", color = "black", size = 8) +   # add stars at y = 29°C on the temperature axis
+
+  # Primary y-axis limits and secondary axis that maps 20-30 temp to 0-10 DHW
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      trans = ~ (. - 20) * 10 / (30 - 20),
+      name = "Degree Heating Weeks (°C wk-1)",
+      breaks = seq(0, 10, 2))) +
+  scale_x_datetime(date_breaks = "1 year", date_labels = "%Y") +
+  xlab("") +
+  theme_classic() +
+  theme(
+    axis.title.y.left  = element_text(color = "black"),
+    axis.title.y.right = element_text(color = "firebrick")) +
+  theme(axis.ticks = element_line(size = 1, color = "black"),
+        axis.ticks.length = unit(0.3, "cm"),
+        axis.text.x = element_text(size = 24,
+                                   color = "black"), 
+        axis.text.y = element_text(size = 24,
+                                   color = "black"),
+        axis.title.y = element_text(size = 28,
+                                    face = "bold"))
+
+ggsave("../output/environmental/KBay_temps_DHW_2013-2026.png", plot = whole_plot, width=18, height=7)
+ggsave("../output/environmental/KBay_temps_DHW_2013-2026.pdf", plot = whole_plot, width=18, height=7)
+```
+
+Plot with only the sampling data 
+```{r}
+MMM <- 27.3
+threshold <- MMM + 1
+
+# Prepare daily_mean with date
+daily_mean_nsf <- daily_mean_nsf %>% 
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(datetime = as.POSIXct(date, format = "%Y-%m-%d", tz = "UTC"))
+
+# Prepare hourly temps with POSIXct datetime
+all_data$year <- as.integer(all_data$year)
+all_data$month <- as.integer(all_data$month)
+all_data <- all_data %>%
+  mutate(
+    datetime = make_datetime(year = year, month = month, day = day, hour = hour, tz = "UTC"))
+
+# Plot
+nsf_plot <- ggplot() +
+  # Hourly temperatures as light blue semi-transparent dots
+  geom_point(data = all_data, aes(x = datetime, y = Temp_C), color = "grey60", alpha = 0.3, size = 2) +
+  # Daily mean temperature as black line
+  geom_line(data = daily_mean_nsf, aes(x = datetime, y = daily_temp_mean, color = "Temperature"), color = "black", linewidth = 3) +
+  
+  # DHW as gray line scaled to temperature y-axis limits (20-30)
+  geom_line(data = daily_mean_nsf, aes(x = datetime, 
+                                   y = DHW * (30 - 20) / (10 - 0) + 20), 
+            color = "firebrick", size = 2.5, alpha = 0.6) +
+  
+  # Horizontal lines for MMM and Bleaching Threshold
+  geom_hline(yintercept = MMM, linetype = "dashed", color = "black", size = 2.5) +
+  geom_hline(yintercept = threshold, linetype = "solid", color = "black", size = 2.5) +
+    geom_point(data = sample_dates, aes(x = datetime, y = 29), shape = 23, fill = "skyblue", color = "black", size = 8) +   # add stars at y = 29°C on the temperature axis
+
+  # Primary y-axis limits and secondary axis that maps 20-30 temp to 0-10 DHW
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      trans = ~ (. - 20) * 10 / (30 - 20),
+      name = "Degree Heating Weeks (°C wk-1)",
+      breaks = seq(0, 10, 2))) +
+  scale_x_datetime(date_breaks = "3 months", date_labels = "%b %Y") +
+  xlab("") +
+  theme_classic() +
+  theme(
+    axis.title.y.left  = element_text(color = "black"),
+    axis.title.y.right = element_text(color = "firebrick")) +
+  theme(axis.ticks = element_line(size = 1, color = "black"),
+        axis.ticks.length = unit(0.3, "cm"),
+        axis.text.x = element_text(size = 24,
+                                   color = "black",
+                                   angle = 45,
+                                   hjust = 1),
+        axis.text.y = element_text(size = 24,
+                                   color = "black"),
+        axis.title.y = element_text(size = 28,
+                                    face = "bold"))
+
+ggsave("../output/environmental/KBay_temps_2022-2026.png", plot = nsf_plot, width=18, height=7)
+ggsave("../output/environmental/KBay_temps_2022-2026.pdf", plot = nsf_plot, width=18, height=7)
+```
+
+Combine both plots into one figure and save
+```{r}
+all_temp_plot <- nsf_plot + whole_plot + 
+  plot_layout(ncol = 1) + 
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(size = 28, face = "bold"))
+
+ggsave("../output/environmental/KBay_temps.pdf", all_temp_plot, width = 30, height = 18, units = "in")
+ggsave("../output/environmental/KBay_temps.png", all_temp_plot, width = 30, height = 18, units = "in", dpi = 300)
+```
+
+Calculate the avg temp for the week and day prior to sampling dates 
+```{r}
+# make sure datetime columns are POSIXct
+all_data <- all_data %>%
+  mutate(datetime = ymd_hms(datetime))
+
+sample_dates <- sample_dates %>%
+  mutate(datetime = ymd(datetime))
+
+# function to calculate mean + sem + n
+calc_stats <- function(data, start_date, end_date, sample_id, window) {
+  df <- data %>%
+    filter(datetime >= start_date & datetime < end_date)
+  
+  if(nrow(df) > 0) {
+    mean_val <- mean(df$Temp_C, na.rm = TRUE)
+    sem_val  <- sd(df$Temp_C, na.rm = TRUE) / sqrt(sum(!is.na(df$Temp_C)))
+    n_val    <- sum(!is.na(df$Temp_C))
+  } else {
+    mean_val <- NA
+    sem_val  <- NA
+    n_val    <- 0
+  }
+  
+  tibble(
+    sample_id = sample_id,
+    window = window,
+    mean_temp = mean_val,
+    sem_temp = sem_val,
+    n = n_val
+  )
+}
+
+# loop over sample_dates and calculate stats for week, day, month
+results <- purrr::map_dfr(1:nrow(sample_dates), function(i) {
+  samp_date <- sample_dates$datetime[i]
+  samp_id   <- sample_dates$sample_id[i]
+  
+  week_prior_start  <- samp_date - days(7)
+  day_prior_start   <- samp_date - days(2)
+  month_prior_start <- samp_date - days(30)
+  
+  bind_rows(
+    calc_stats(all_data, week_prior_start, samp_date, samp_id, "week_prior"),
+    calc_stats(all_data, day_prior_start, samp_date, samp_id, "day_prior"),
+    calc_stats(all_data, month_prior_start, samp_date, samp_id, "month_prior")
+  )
+})
+
+results
+
+```
+
+
+## TPC env plotting 
+
+Look at the six months prior to TPC sampling specifically 
+```{r}
+# 2023
+temps_2023 <- all_data %>%
+  filter(DateTime <= "2023-09-23 01:00:00") %>%
+  filter(DateTime >= "2023-03-23 01:00:00")
+temps_2023_high <- temps_2023 %>%
+  dplyr::filter(Temp_C > 27.3)
+hours_above_28_2023 <- temps_2023 %>%
+  filter(Temp_C > 27.3) %>%
+  dplyr::summarise(hours = n() * 0.5) %>%
+  pull(hours)
+
+## How many hrs were above 28 in the month before collection?
+collection_time <- as.POSIXct("2023-09-23 00:00:00", tz = "UTC")
+start_window <- collection_time %m-% months(2)  # 2 month before
+end_window   <- collection_time                 # up to collection
+temps_month_before <- temps_2023_high %>%
+  filter(DateTime >= start_window,
+         DateTime <  end_window)
+hours_in_month_before <- nrow(temps_month_before) * 0.5
+hours_in_month_before
+
+# 2025
+temps_2025 <- all_data %>%
+  filter(DateTime <= "2025-10-01 01:00:00") %>%
+  filter(DateTime >= "2025-04-01 01:00:00")
+temps_2025_high <- temps_2025 %>%
+  dplyr::filter(Temp_C > 27.3)
+hours_above_28_2025 <- temps_2025 %>%
+  filter(Temp_C > 27.3) %>%
+  dplyr::summarise(hours = n() * 0.5) %>%
+  pull(hours)
+
+## How many hrs were above 28 in the month before collection?
+collection_time <- as.POSIXct("2025-10-01 00:00:00", tz = "UTC")
+start_window <- collection_time %m-% months(2)  # 2 month before
+end_window   <- collection_time                 # up to collection
+temps_month_before <- temps_2025_high %>%
+  filter(DateTime >= start_window,
+         DateTime <  end_window)
+hours_in_month_before <- nrow(temps_month_before) * 0.5
+hours_in_month_before
+```
+
+A: Compare 2019, 2023, and 2025 on same plot -- different colored lines. Add MMM as 27.3 and MMM+1 as horizontal lines. B: add background shading for MMM
+
+
+
+
+
+
+
+
+
+Plot 2023 and 2025
+```{r}
+# 1. Setup Collection Dates and Combine Data
+temps_2023$Collection_Date <- as.POSIXct("2023-09-23")
+temps_2025$Collection_Date <- as.POSIXct("2025-10-01")
+
+all_temps <- bind_rows(
+  temps_2023 %>% mutate(Sampling_Year = "2023"),
+  temps_2025 %>% mutate(Sampling_Year = "2025")
+) %>%
+  mutate(
+    DateTime = as.POSIXct(DateTime),
+    Days_Before = as.numeric(difftime(DateTime, Collection_Date, units = "days"))
+  ) %>%
+  filter(Days_Before >= -365 & Days_Before <= 0)
+
+# Define New Colors (Teal and Gold)
+env_colors <- c("2023" = "#008080", "2025" = "#D4AF37")
+
+# PANEL A 
+p_time <- ggplot(all_temps, aes(x = Days_Before, y = Temp_C, color = Sampling_Year)) +
+   geom_hline(yintercept = 28, linetype = "dashed", color = "grey40", alpha = 0.5) +
+   geom_line(alpha = 0.3, linewidth = 0.3) +
+   geom_smooth(method = "gam", linewidth = 1.4, se = FALSE) +
+   scale_color_manual(values = env_colors) +
+   
+   # ADD na.rm = TRUE here to handle missing data
+   scale_y_continuous(breaks = seq(floor(min(all_temps$Temp_C, na.rm = TRUE)), 
+                                   ceiling(max(all_temps$Temp_C, na.rm = TRUE)), by = 2)) +
+   
+   theme_classic() +
+   theme(
+     axis.text = element_text(size = 15, color = "black"),
+     axis.title = element_text(size = 16, face = "plain"),
+     legend.position = "none" 
+   ) +
+   labs(x = "Days Before Collection", y = "Temperature (°C)")
+
+# PANEL B: Frequency as Percentage (Right)
+freq_data <- all_temps %>%
+  mutate(temp_bin = round(Temp_C)) %>%
+  group_by(Sampling_Year, temp_bin) %>%
+  dplyr::summarise(count = n(), .groups = "drop_last") %>%
+  mutate(percent = (count / sum(count)) * 100)
+
+p_freq <- ggplot(freq_data, aes(x = temp_bin, y = percent, fill = Sampling_Year)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.85, color = "white") +
+  scale_fill_manual(values = env_colors) +
+  scale_x_continuous(breaks = seq(22, 32, 1)) +
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 15, color = "black"),
+    axis.title = element_text(size = 16, face = "plain"),
+    legend.position = "right", 
+    legend.background = element_blank(),
+    legend.text = element_text(size = 12)
+  ) +
+  labs(x = "Temperature Bin (°C)", 
+       y = "Percentage of Total Time (%)", 
+       fill = "Year")
+
+# 3. Assemble Side-by-Side and Label with Patchwork
+# plot_annotation(tag_levels = 'A') automatically labels the plots
+final_env_plot <- (p_time + p_freq) + 
+  plot_layout(widths = c(1.3, 1)) + 
+  plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(face = "bold", size = 14))
+
+# Save 
+ggsave("../output/environmental/Temperatures_2023_and_2025.pdf", 
+       plot = final_env_plot, 
+       width = 18, 
+       height = 6, 
+       units = "in", 
+       device = "pdf",
+       dpi = 300)
+ggsave("../output/environmental/Temperatures_2023_and_2025.png", 
+       plot = final_env_plot, 
+       width = 18, 
+       height = 6, 
+       units = "in", 
+       dpi = 300)
+```
+
+Plot 2019, 2023, and 2025
+```{r}
+combined_data$datetime <- as.POSIXct(combined_data$datetime)
+
+#### PANEL A: Time Series
+plot_summary <- combined_data %>%
+  filter(year %in% c(2019, 2023, 2025),
+         month >= 3 & month <= 10) %>%
+  mutate(dummy_date = as.Date(paste0("2024-", month, "-", day))) %>%
+  group_by(year, dummy_date) %>%
+  dplyr::summarise(
+    # Use a custom check to prevent Inf if all values are NA
+    mean_temp = if(all(is.na(Temperature))) NA else mean(Temperature, na.rm = TRUE),
+    min_temp  = if(all(is.na(Temperature))) NA else min(Temperature, na.rm = TRUE),
+    max_temp  = if(all(is.na(Temperature))) NA else max(Temperature, na.rm = TRUE),
+    .groups = "drop")
+
+p_time <- ggplot(plot_summary, aes(x = dummy_date, color = as.factor(year), fill = as.factor(year))) +
+  # Shading for Daily Min/Max (geom_ribbon handles NAs by leaving gaps)
+  geom_ribbon(aes(ymin = min_temp, ymax = max_temp), alpha = 0.2, color = NA) +
+  # All lines are now solid
+  geom_line(aes(y = mean_temp), linewidth = 1.5, linetype = "solid") +
+  geom_hline(yintercept = 27.3, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 28.3, linetype = "dotted", color = "black") +
+  scale_x_date(date_labels = "%b", 
+               date_breaks = "1 month", 
+               limits = c(as.Date("2024-03-01"), as.Date("2024-11-01")),
+               expand = c(0,0)) +
+  scale_y_continuous(breaks = seq(20, 32, by = 2)) +
+  scale_color_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") +
+  theme_classic(base_size = 26) + # Massive base size
+  theme(
+    axis.text = element_text(color = "black", size = 22),
+    axis.title = element_text(face = "bold", size = 28),
+    legend.title = element_text(face = "bold", size = 24),
+    legend.text = element_text(size = 22),
+    legend.position = "right",
+    plot.margin = margin(10, 10, 10, 10)
+  ) +
+  labs(x = "", y = "Temperature (°C)", color = "Year", fill = "Year")
+
+#### PANEL B: Frequency
+freq_data_clean <- combined_data %>%
+  filter(year %in% c(2019, 2023, 2025), month >= 3 & month <= 10) %>%
+  mutate(temp_bin = round(Temperature)) %>%
+  filter(!is.na(temp_bin), temp_bin >= 22, temp_bin <= 30) %>%
+  group_by(year, temp_bin) %>%
+  dplyr::summarise(count = n(), .groups = "drop") %>%
+  left_join(year_totals, by = "year") %>%
+  mutate(percent = (count / total_n) * 100)
+
+p_freq <- ggplot(freq_data_clean, aes(x = temp_bin, y = percent, fill = as.factor(year))) +
+  annotate("rect", xmin = 26.5, xmax = 27.5, ymin = 0, ymax = Inf, fill = "grey70", alpha = 0.5) +
+  annotate("rect", xmin = 27.5, xmax = Inf, ymin = 0, ymax = Inf, fill = "grey40", alpha = 0.5) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 1, color = "black", linewidth = 0.5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, max(freq_data_clean$percent, na.rm = TRUE) + 5)) +
+  scale_x_continuous(breaks = seq(22, 30, 1), limits = c(21.5, 30.5)) +
+  scale_fill_brewer(palette = "Set1") +
+  theme_classic(base_size = 26) +
+  theme(
+    axis.text = element_text(size = 22, color = "black"),
+    axis.title = element_text(face = "bold", size = 28),
+    legend.position = "none" 
+  ) +
+  labs(x = "Temperature Bin (°C)", y = "Total Time (%)")
+
+## Combine and Save
+final_plot <- (p_time + p_freq) + 
+  plot_layout(widths = c(1.8, 1), guides = "collect") + 
+  plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 32, face = "bold"))
+
+# Save 
+ggsave("../output/environmental/Temperatures_Mar-Oct_2019_2023_2025.pdf", 
+       plot = final_plot, 
+       width = 20, 
+       height = 8, 
+       units = "in", 
+       device = "pdf",
+       dpi = 300)
+ggsave("../output/environmental/Temperatures_Mar-Oct_2019_2023_2025.png", 
+       plot = final_plot, 
+       width = 20, 
+       height = 8, 
+       units = "in", 
+       dpi = 300)
+```
+
+Calculate numbers of days above MMM and MMM+1
+```{r}
+compare_temps <- combined_data %>%
+  filter(year %in% c(2019, 2023, 2025),
+         month >= 3 & month <= 10) 
+
+# Calculate hourly means first to normalize the frequency difference
+temp_summary <- compare_temps %>%
+  mutate(datetime = as.POSIXct(datetime)) %>%
+  # Create a 'date_hour' column to group by hour
+  mutate(date_hour = floor_date(datetime, "hour"),
+         date = as.Date(datetime)) %>%
+  group_by(year, date, date_hour) %>%
+  summarize(hourly_mean_temp = mean(Temperature, na.rm = TRUE), .groups = "drop")
+
+# Calculate "Hours Above" using the Hourly Means
+hours_above <- temp_summary %>%
+  group_by(year) %>%
+  summarize(
+    hours_above_MMM = sum(hourly_mean_temp > 27.3, na.rm = TRUE),
+    hours_above_Bleaching = sum(hourly_mean_temp > 28.3, na.rm = TRUE)
+  )
+
+# Calculate "Days Above" using Daily Maximums
+days_above <- temp_summary %>%
+  group_by(year, date) %>%
+  summarize(daily_max = max(hourly_mean_temp, na.rm = TRUE), .groups = "drop") %>%
+  group_by(year) %>%
+  summarize(
+    days_above_MMM = sum(daily_max > 27.3, na.rm = TRUE),
+    days_above_Bleaching = sum(daily_max > 28.3, na.rm = TRUE)
+  )
+
+# Combine and View Results
+final_results <- left_join(hours_above, days_above, by = "year")
+print(final_results)
+```
+
+
+
