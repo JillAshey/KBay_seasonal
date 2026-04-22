@@ -1,0 +1,65 @@
+---
+title: "Surface area calculations"
+author: "Jill Ashey"
+date: "2026-04-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Wax dipping method 
+
+Load wax data and calculate change in weight 
+```{r}
+wax_data <- read.csv("../data/02-Physiology/SurfaceArea/SurfaceArea_wax.csv")
+wax_data <- wax_data %>%
+  mutate(delta.mass.g = With_wax_weight_g - Without_wax_weight_g)
+```
+
+Calculate surface area for standards
+```{r}
+wax_data_std <- wax_data %>%
+  filter(Sample == "Standard") %>%
+  mutate(radius = Diameter/2,
+         surface.area.cm2 = (pi * Diameter * Height) + (pi * radius^2))
+
+ggplot(wax_data_std, aes(x = delta.mass.g, y = surface.area.cm2)) +
+  geom_point(size = 2) +
+  # Add the linear regression line for each facet
+  geom_smooth(method = "lm", formula = y ~ x, color = "blue", se = FALSE) +
+  # Create a separate plot for each Timepoint
+  facet_wrap(~Timepoint, scales = "free") + 
+  theme_bw() +
+  labs(
+    title = "Wax Standard Curves by Timepoint",
+    x = "Wax Weight Gain (g)",
+    y = "Calculated Surface Area (cm2)"
+  )
+```
+
+Calculate slopes (forcing the origin) and join with sample data
+```{r}
+wax_data_samp <- wax_data_std %>%
+  group_by(Timepoint) %>%
+  nest() %>%
+  mutate(model = map(data, ~lm(surface.area.cm2 ~ delta.mass.g + 0, data = .x))) %>%
+  right_join(wax_data %>% filter(Sample == "Coral"), by = "Timepoint") %>%
+  group_by(Timepoint) %>%
+  mutate(surface.area.cm2 = predict(model[[1]], newdata = cur_data())) %>%
+  select(-data, -model) 
+```
+
+Keep only colony and surface area info
+```{r}
+wax_data_samp <- wax_data_samp %>%
+  dplyr::select(ColonyID, Species, Phenotype, Timepoint, Without_wax_weight_g, With_wax_weight_g, delta.mass.g, surface.area.cm2, Notes)
+```
+
+Save as csv 
+```{r}
+write.csv(wax_data_samp, "../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
+```

@@ -33,7 +33,7 @@ library(emmeans)
 
 Run metadata
 ```{r}
-run_meta <- read_csv("../data/pi_curves/pi_curve_metadata_run.csv") %>%
+run_meta <- read_csv("../data/02-Physiology/PI_curves/pi_curve_metadata_run.csv") %>%
   mutate(
     Start = as_datetime(Date) + hours(hour(Start.time)) + minutes(minute(Start.time)),
     Stop  = as_datetime(Date) + hours(hour(Stop.time)) + minutes(minute(Stop.time)))
@@ -51,13 +51,18 @@ light_summary <- run_meta %>%
 
 Load sample metadata
 ```{r}
-sample_meta <- read_csv("../data/pi_curves/pi_curve_metadata_sample.csv")
+sample_meta <- read_csv("../data/02-Physiology/PI_curves/pi_curve_metadata_sample.csv")
 
 # Make sure Chamber well # is numeric
 sample_meta <- sample_meta %>%
   mutate(`Chamber` = as.numeric(`Chamber`))
 ```
 
+Read in wax surface area data 
+```{r}
+surface_area <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
+surface_area$ColonyID <- as.character(surface_area$ColonyID)
+```
 
 ## Sept 2023 
 
@@ -247,23 +252,29 @@ write_csv(all_interval_summaries, "../output/pi_curves/Sept2023/all_interval_sum
 
 Read in interval data again so the above chunk does not need to be run
 ```{r}
-all_int <- read.csv("../output/pi_curves/Sept2023/all_interval_summaries_Sept2023.csv")
-all_int$Colony_ID <- as.character(all_int$Colony_ID)
+all_int <- read.csv("../output/02-Physiology/PI_curves/Sept2023/all_interval_summaries_Sept2023.csv") %>%
+  rename(ColonyID = Colony_ID)
+all_int$ColonyID <- as.character(all_int$ColonyID)
 ```
 
-Filter sample metadata for Sept 2023
+Filter wax metadata and sample metadata for Sept 2023
 ```{r}
-sept_2023 <- sample_meta %>%
-  filter(grepl("^2023-09", Date))
-sept_2023$Surface_Area_cm2 <- as.numeric(sept_2023$Surface_Area_cm2)
+sept_2023_wax <- surface_area %>%
+  filter(Timepoint == "September_2023")
+sept_2023$surface.area.cm2 <- as.numeric(sept_2023$surface.area.cm2)
+
+sept_2023_meta <- sample_meta %>%
+  filter(grepl("^2023-09", Date)) %>%
+  rename(ColonyID = Colony_ID)
 ```
 
-Merge sample metadata with interval data 
+Merge sample metadata with interval data and wax data 
 ```{r}
 all_int <- all_int %>%
-  inner_join(sept_2023, by = "Colony_ID") %>%
-  filter(!is.na(Phenotype))
-length(unique(all_int$Colony_ID))
+  inner_join(sept_2023_wax, by = "ColonyID") %>%
+  inner_join(sept_2023_meta, by = "ColonyID") #%>%
+  #filter(!is.na(Phenotype))
+length(unique(all_int$ColonyID))
 ```
 
 Normalize interval data by chamber volume and surface area and save
@@ -272,19 +283,19 @@ Normalize interval data by chamber volume and surface area and save
 all_int <- all_int %>%
   mutate(
     Chamber_Volume_L = Chamber_Volume_mL / 1000,  # mL → L
-    Slope_norm = (Blank_Corrected_Slope * Chamber_Volume_L / Surface_Area_cm2) * 60) # units are umol O2 cm-2 h-1
-write.csv(all_int, "../output/pi_curves/Sept2023/all_interval_summaries_normalized_Sept2023.csv")
+    Slope_norm = (Blank_Corrected_Slope * Chamber_Volume_L / surface.area.cm2) * 60) # units are umol O2 cm-2 h-1
+write.csv(all_int, "../output/02-Physiology/PI_curves/all_interval_summaries_normalized_Sept2023.csv")
 ```
 
 Plot PI curves across light values 
 ```{r}
-ggplot(all_int, aes(x = Light_Value, y = Slope_norm, color = Phenotype)) +
+ggplot(all_int, aes(x = Light_Value, y = Slope_norm, color = Phenotype.x)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
   geom_point() +
-  geom_line(aes(group = Colony_ID)) + 
+  geom_line(aes(group = ColonyID)) + 
   scale_color_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
-  facet_wrap(~Species, scales = "fixed") +
+  facet_wrap(~Species.x, scales = "fixed") +
   theme_classic(base_size = 14) +
   labs(x = "Light (µmol photons m-2 s-1)", y = "umol O2 cm-2 h-1", color = "Phenotype")
 ```
@@ -292,7 +303,7 @@ ggplot(all_int, aes(x = Light_Value, y = Slope_norm, color = Phenotype)) +
 Something is off with 237 at the 150 light level. The slope is -19. Remove for further analysis 
 ```{r}
 all_int_sub <- all_int %>%
-  filter(!Colony_ID == 237)
+  filter(!ColonyID == 237)
 ```
 
 ### Fit Platt model to determine PI curve metrics 
@@ -306,9 +317,9 @@ all_int_sub <- all_int %>%
 Nest by colony 
 ```{r}
 pi_nested <- all_int %>%
-  select(Colony_ID, Light_Value, Slope_norm) %>%  # or whatever your P column is
+  select(ColonyID, Light_Value, Slope_norm) %>%  # or whatever your P column is
   rename(I = Light_Value, P = Slope_norm) %>%
-  group_by(Colony_ID) %>%
+  group_by(ColonyID) %>%
   nest()
 ```
 
@@ -339,8 +350,8 @@ pi_results <- pi_nested %>%
 Merge pi curve metric data with sample metadata and save 
 ```{r}
 pi_results <- pi_results %>%
-  inner_join(sept_2023, by = "Colony_ID")
-write.csv(pi_results, "../output/pi_curves/Sept2023/pi_curve_metrics_Sept2023.csv")
+  inner_join(sept_2023, by = "ColonyID")
+write.csv(pi_results, "../output/02-Physiology/PI_curves/Sept2023/pi_curve_metrics_Sept2023.csv")
 ```
 
 Pivot pi data to long format for plotting 
@@ -353,10 +364,10 @@ pi_long <- pi_results %>%
 
 Plot metrics 
 ```{r}
-ggplot(pi_long, aes(x = Phenotype, y = Value, fill = Phenotype)) +
+ggplot(pi_long, aes(x = Phenotype.x, y = Value, fill = Phenotype.x)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(width = 0.2, size = 1.5, alpha = 0.8) +
-  facet_grid(Parameter ~ Species, scales = "free_y") +
+  facet_grid(Parameter ~ Species.x, scales = "free_y") +
   scale_fill_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
   theme_bw(base_size = 14) +

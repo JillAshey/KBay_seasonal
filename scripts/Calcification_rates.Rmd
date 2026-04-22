@@ -17,22 +17,22 @@ library(lsmeans)
 
 Read in data 
 ```{r}
-calc <- read.csv("../data/Calcification/Calcification_data_field.csv", header = T)
+calc <- read.csv("../data/02-Physiology/Calcification/Calcification_data_field.csv", header = T)
 ```
 
 Add Timepoint as a column
 ```{r}
 calc <- calc %>%
   mutate(Timepoint = case_when(
-    grepl("2023-04", Date) ~ "Apr23",
-    grepl("2023-09", Date) ~ "Sept23",
-    grepl("2024-01", Date) ~ "Jan24",
-    grepl("2024-05", Date) ~ "May24",
-    grepl("2024-10", Date) ~ "Oct24",
-    grepl("2025-01", Date) ~ "Jan25",
-    grepl("2025-05", Date) ~ "May25",
-    grepl("2025-10", Date) ~ "Oct25",
-    grepl("2026-01", Date) ~ "Jan26",
+    grepl("2023-04", Date) ~ "April_2023",
+    grepl("2023-09", Date) ~ "September_2023",
+    grepl("2024-01", Date) ~ "January_2024",
+    grepl("2024-05", Date) ~ "May_2024",
+    grepl("2024-10", Date) ~ "October_2024",
+    grepl("2025-01", Date) ~ "January_2025",
+    grepl("2025-05", Date) ~ "May_2025",
+    grepl("2025-10", Date) ~ "October_2025",
+    grepl("2026-01", Date) ~ "January_2026",
     TRUE ~ NA_character_))
 ```
 
@@ -62,10 +62,10 @@ blank_delta_ta <- calc %>%
 
 # Add manual substitutions for missing timepoints
 blank_subs <- tibble(
-  Timepoint = c("Apr23", "Sept23"),
+  Timepoint = c("April_2023", "September_2023"),
   mean_blank_delta_ta = c(
-    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "May24"],
-    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "Oct24"]
+    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "May_2024"],
+    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "October_2024"]
   )
 )
 
@@ -89,53 +89,31 @@ calc <- calc %>%
   filter(!is.na(Net_Calcification) & !is.nan(Net_Calcification))
 ```
 
-Read in sample metadata for surface area 
+Read in wax surface area data 
 ```{r}
-sample_meta <- read_csv("../data/Surface_Area/SurfaceArea_fraggrameter.csv")
-```
+surface_area <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
+surface_area$ColonyID <- as.character(surface_area$ColonyID)
 
-Add timepoint col
-```{r}
-sample_meta <- sample_meta %>%
-  mutate(Timepoint = case_when(
-    grepl("2023-04", Date) ~ "Apr23",
-    grepl("2023-09", Date) ~ "Sept23",
-    grepl("2024-01", Date) ~ "Jan24",
-    grepl("2024-05", Date) ~ "May24",
-    grepl("2024-10", Date) ~ "Oct24",
-    grepl("2025-01", Date) ~ "Jan25",
-    grepl("2025-05", Date) ~ "May25",
-    grepl("2025-10", Date) ~ "Oct25",
-    grepl("2026-01", Date) ~ "Jan26",
-    TRUE ~ NA_character_))
-```
-
-Subset specific cols 
-```{r}
-sample_meta_sub <- sample_meta %>%
-  select(Colony_ID, Species, Phenotype, Surface_Area_cm2, Timepoint)
+# Subset specific columns
+surface_area <- surface_area %>%
+  select(ColonyID, Species, Phenotype, surface.area.cm2, Timepoint)
 ```
 
 Join dfs 
 ```{r}
-# Make sure the join columns match
-calc2 <- calc %>%
-  rename(Colony_ID = ColonyID)
-
-# Join on Colony_ID and Timepoint
-joined <- calc2 %>%
-  left_join(sample_meta_sub, by = c("Colony_ID", "Timepoint"))
+joined <- calc %>%
+  left_join(surface_area, by = c("ColonyID", "Timepoint"))
 ```
 
 Normalize by SA
 ```{r}
 joined <- joined %>%
-  mutate(Net_Calcification_cm2 = Net_Calcification / Surface_Area_cm2)
+  mutate(Net_Calcification_cm2 = Net_Calcification / surface.area.cm2)
 ```
 
 Save as csv 
 ```{r}
-write.csv(joined, "../output/calcification/Calcification_data_normalized.csv")
+write.csv(joined, "../output/02-Physiology/Calcification/Calcification_data_normalized.csv")
 ```
 
 Calculate mean, sem, and sd 
@@ -155,15 +133,15 @@ joined_summary <- joined %>%
 Plot! 
 ```{r}
 # Set levels 
-joined_summary$Timepoint <- factor(joined_summary$Timepoint, levels = c("Apr23",
-                                                                        "Sept23",
-                                                                        "Jan24", 
-                                                                        "May24", 
-                                                                        "Oct24", 
-                                                                        "Jan25", 
-                                                                        "May25",
-                                                                        "Oct25",
-                                                                        "Jan26"))
+joined_summary$Timepoint <- factor(joined_summary$Timepoint, levels = c("April_2023",
+                                                                        "September_2023",
+                                                                        "January_2024", 
+                                                                        "May_2024", 
+                                                                        "October_2024", 
+                                                                        "January_2025", 
+                                                                        #"May_2025",
+                                                                        "October_2025"))
+                                                                        #"Jan26"))
 
 ggplot(joined_summary, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
@@ -179,7 +157,7 @@ ggplot(joined_summary, aes(x = Timepoint, y = mean_calc, color = Phenotype, grou
   theme_classic(base_size = 16) +  # bigger base size
   labs(
     x = "",
-    y = "Net calcification +/- SEM",
+    y = "Net calcification (umol/hr/cm2)",
     color = "Phenotype"
   ) +
 theme(
