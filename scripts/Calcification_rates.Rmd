@@ -33,6 +33,7 @@ calc <- calc %>%
     grepl("2025-05", Date) ~ "May_2025",
     grepl("2025-10", Date) ~ "October_2025",
     grepl("2026-01", Date) ~ "January_2026",
+    grepl("2026-05", Date) ~ "May_2026",
     TRUE ~ NA_character_))
 ```
 
