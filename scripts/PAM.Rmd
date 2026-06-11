@@ -17,7 +17,7 @@ library(lme4)
 
 Read in PAM data 
 ```{r}
-pam <- read_csv("../data/Master_datasheet_pam.csv")
+pam <- read_csv("../data/02-Physiology/PAM/Master_datasheet_pam.csv")
 ```
 
 Calculate mean and sem 

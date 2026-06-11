@@ -96,20 +96,29 @@ surface_area <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_ca
 surface_area$ColonyID <- as.character(surface_area$ColonyID)
 
 # Subset specific columns
+#surface_area <- surface_area %>%
+#  select(ColonyID, Species, Phenotype, surface.area.cm2, Timepoint)
+
 surface_area <- surface_area %>%
-  select(ColonyID, Species, Phenotype, surface.area.cm2, Timepoint)
+  select(ColonyID, Species, Phenotype)
 ```
 
 Join dfs 
 ```{r}
 joined <- calc %>%
-  left_join(surface_area, by = c("ColonyID", "Timepoint"))
+  full_join(surface_area, by = c("ColonyID"))
+
+#joined <- calc %>%
+#  left_join(surface_area, by = c("ColonyID", "Timepoint"))
 ```
 
 Normalize by SA
 ```{r}
+#joined <- joined %>%
+#  mutate(Net_Calcification_cm2 = Net_Calcification / surface.area.cm2)
+
 joined <- joined %>%
-  mutate(Net_Calcification_cm2 = Net_Calcification / surface.area.cm2)
+  mutate(Net_Calcification_cm2 = Net_Calcification / 10)
 ```
 
 Save as csv 
@@ -140,9 +149,10 @@ joined_summary$Timepoint <- factor(joined_summary$Timepoint, levels = c("April_2
                                                                         "May_2024", 
                                                                         "October_2024", 
                                                                         "January_2025", 
-                                                                        #"May_2025",
-                                                                        "October_2025"))
-                                                                        #"Jan26"))
+                                                                        "May_2025",
+                                                                        "October_2025",
+                                                                        "January_2026",
+                                                                        "May_2026"))
 
 ggplot(joined_summary, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +

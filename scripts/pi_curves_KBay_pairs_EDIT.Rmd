@@ -2571,10 +2571,10 @@ Filter sample metadata for May 2026
 ```{r}
 may_2026 <- sample_meta %>%
   filter(grepl("^2026-01", Date))
-may_2026$Surface_Area_cm2 <- 20
+may_2026$Surface_Area_cm2 <- 10
 ```
 
-NOTE FOR May 2026 - I set SA to dummy values (20 for SA) until we can get fraggrameter/wax values for SA. 
+NOTE FOR May 2026 - I set SA to dummy values (10 for SA) until we can get fraggrameter/wax values for SA. 
 
 Merge sample metadata with interval data 
 ```{r}
@@ -2691,47 +2691,48 @@ Read in normalized interval data
 int_sept2023 <- read.csv("../output/02-Physiology/PI_curves/Sept2023/all_interval_summaries_normalized_Sept2023.csv")
 int_sept2023$Timepoint <- "Sept2023"
 int_sept2023 <- int_sept2023 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_jan2024 <- read.csv("../output/02-Physiology/PI_curves/Jan2024/all_interval_summaries_normalized_Jan2024.csv")
 int_jan2024$Timepoint <- "Jan2024"
 int_jan2024 <- int_jan2024 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_may2024 <- read.csv("../output/02-Physiology/PI_curves/May2024/all_interval_summaries_normalized_May2024.csv")
 int_may2024$Timepoint <- "May2024"
 int_may2024 <- int_may2024 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_oct2024 <- read.csv("../output/02-Physiology/PI_curves/Oct2024/all_interval_summaries_normalized_Oct2024.csv")
 int_oct2024$Timepoint <- "Oct2024"
 int_oct2024 <- int_oct2024 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_jan2025 <- read.csv("../output/02-Physiology/PI_curves/Jan2025/all_interval_summaries_normalized_Jan2025.csv")
 int_jan2025$Timepoint <- "Jan2025"
 int_jan2025 <- int_jan2025 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_may2025 <- read.csv("../output/02-Physiology/PI_curves/May2025/all_interval_summaries_normalized_May2025.csv")
 int_may2025$Timepoint <- "May2025"
 int_may2025 <- int_may2025 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_oct2025 <- read.csv("../output/02-Physiology/PI_curves/Oct2025/all_interval_summaries_normalized_Oct2025.csv")
 int_oct2025$Timepoint <- "Oct2025"
 int_oct2025 <- int_oct2025 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_jan2026 <- read.csv("../output/02-Physiology/PI_curves/Jan2026/all_interval_summaries_normalized_Jan2026.csv")
 int_jan2026$Timepoint <- "Jan2026"
 int_jan2026 <- int_jan2026 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(Colony_ID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
 
 int_may2026 <- read.csv("../output/02-Physiology/PI_curves/May2026/all_interval_summaries_normalized_May2026.csv")
 int_may2026$Timepoint <- "May2026"
 int_may2026 <- int_may2026 %>%
-  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint)
+  select(ColonyID, Run.x, Light_Value, Date, Species, Phenotype, Slope_norm, Timepoint) %>%
+  rename(Colony_ID = ColonyID)
 
 ```
 
@@ -2743,7 +2744,7 @@ all_time_int <- rbind(int_sept2023, int_jan2024, int_may2024, int_oct2024, int_j
 Plot PI curves across light values 
 ```{r}
 # Set levels 
-all_time_int$Timepoint <- factor(all_time_int$Timepoint, levels = c("Sept23", "Jan24", "May24", "Oct24", "Jan25", "May25", "Oct25", "Jan26"))
+all_time_int$Timepoint <- factor(all_time_int$Timepoint, levels = c("Sept23", "Jan24", "May24", "Oct24", "Jan25", "May25", "Oct25", "Jan26", "May26"))
 
 ggplot(all_time_int, aes(x = Light_Value, y = Slope_norm, color = Phenotype)) +
   geom_hline(yintercept = 0, alpha = 0.5, linetype = "dashed") +
@@ -2821,38 +2822,46 @@ ggplot(all_time_int_filt, aes(x = Light_Value, y = Slope_norm, color = Phenotype
 
 Read in calculated pi curve metrics 
 ```{r}
-pi_metrics_sept2023 <- read.csv("../output/pi_curves/Sept2023/pi_curve_metrics_Sept2023.csv")
+pi_metrics_sept2023 <- read.csv("../output/02-Physiology/PI_curves/Sept2023/pi_curve_metrics_Sept2023.csv")
 pi_metrics_sept2023$Timepoint <- "Sept23"
 
-pi_metrics_jan2024 <- read.csv("../output/pi_curves/Jan2024/pi_curve_metrics_Jan2024.csv")
+pi_metrics_jan2024 <- read.csv("../output/02-Physiology/PI_curves/Jan2024/pi_curve_metrics_Jan2024.csv")
 pi_metrics_jan2024$Timepoint <- "Jan24"
 
-pi_metrics_may2024 <- read.csv("../output/pi_curves/May2024/pi_curve_metrics_May2024.csv")
+pi_metrics_may2024 <- read.csv("../output/02-Physiology/PI_curves/May2024/pi_curve_metrics_May2024.csv")
 pi_metrics_may2024$Timepoint <- "May24"
 
-pi_metrics_oct2024 <- read.csv("../output/pi_curves/Oct2024/pi_curve_metrics_Oct2024.csv")
+pi_metrics_oct2024 <- read.csv("../output/02-Physiology/PI_curves/Oct2024/pi_curve_metrics_Oct2024.csv")
 pi_metrics_oct2024$Timepoint <- "Oct24"
 
-pi_metrics_jan2025 <- read.csv("../output/pi_curves/Jan2025/pi_curve_metrics_Jan2025.csv")
+pi_metrics_jan2025 <- read.csv("../output/02-Physiology/PI_curves/Jan2025/pi_curve_metrics_Jan2025.csv")
 pi_metrics_jan2025$Timepoint <- "Jan25"
 pi_metrics_jan2025 <- pi_metrics_jan2025 %>% 
   select(-c("...11", "...12", "...13"))
 
-pi_metrics_may2025 <- read.csv("../output/pi_curves/May2025/pi_curve_metrics_May2025.csv")
+pi_metrics_may2025 <- read.csv("../output/02-Physiology/PI_curves/May2025/pi_curve_metrics_May2025.csv")
 pi_metrics_may2025$Timepoint <- "May25"
 
-pi_metrics_oct2025 <- read.csv("../output/pi_curves/Oct2025/pi_curve_metrics_Oct2025.csv")
+pi_metrics_oct2025 <- read.csv("../output/02-Physiology/PI_curves/Oct2025/pi_curve_metrics_Oct2025.csv")
 pi_metrics_oct2025$Timepoint <- "Oct25"
 
-pi_metrics_jan2026 <- read.csv("../output/pi_curves/Jan2026/pi_curve_metrics_Jan2026.csv")
+pi_metrics_jan2026 <- read.csv("../output/02-Physiology/PI_curves/Jan2026/pi_curve_metrics_Jan2026.csv")
 pi_metrics_jan2026$Timepoint <- "Jan26"
 pi_metrics_jan2026 <- pi_metrics_jan2026 %>% 
   select(-c("...11", "...12", "...13"))
+
+pi_metrics_may2026 <- read.csv("../output/02-Physiology/PI_curves/May2026/pi_curve_metrics_May2026.csv")
+pi_metrics_may2026$Timepoint <- "May26"
+pi_metrics_may2026 <- pi_metrics_may2026 %>% 
+  select(-c("...11", "...12", "...13")) %>%
+  rename(Colony_ID = ColonyID)
 ```
 
 Bind data together 
 ```{r}
-all_time_pi_metrics <- rbind(pi_metrics_sept2023, pi_metrics_jan2024, pi_metrics_may2024, pi_metrics_oct2024, pi_metrics_jan2025, pi_metrics_may2025, pi_metrics_oct2025, pi_metrics_jan2026)
+all_time_pi_metrics <- rbind(pi_metrics_jan2024, pi_metrics_may2024, pi_metrics_oct2024, pi_metrics_jan2025, pi_metrics_may2025, pi_metrics_oct2025, pi_metrics_jan2026, pi_metrics_may2026)
+
+# pi_metrics_sept2023
 ```
 
 Remove Jan25 for now (still need SA)
@@ -3187,7 +3196,7 @@ pi_metrics_summary <- all_time_pi_metrics %>%
 Plot! 
 ```{r}
 # Set levels 
-pi_metrics_summary$Timepoint <- factor(pi_metrics_summary$Timepoint, levels = c("Sept23", "Jan24", "May24", "Oct24", "Jan25", "May25", "Oct25", "Jan26"))
+pi_metrics_summary$Timepoint <- factor(pi_metrics_summary$Timepoint, levels = c("Jan24", "May24", "Oct24", "Jan25", "May25", "Oct25", "Jan26", "May26"))
 
 # Pmax
 ggplot(pi_metrics_summary, aes(x = Timepoint, y = mean_Pmax, color = Phenotype, group = Phenotype)) +

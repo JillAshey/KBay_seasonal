@@ -101,7 +101,7 @@ theme(
 
 Read in metadata 
 ```{r}
-meta_sym <- read.csv("../data/Physiology/sym_counts/sym_count_metadata.csv")
+meta_sym <- read.csv("../data/02-Physiology/Symbiont_density/sym_count_metadata.csv")
 
 # Remove extra spaces 
 meta_sym <- meta_sym %>%
@@ -113,7 +113,7 @@ meta_sym <- meta_sym %>%
 
 Read in raw data from guava
 ```{r}
-files <- list.files(path = "../data/Physiology/sym_counts/raw_guava", pattern = "*.csv", full.names = TRUE)
+files <- list.files(path = "../data/02-Physiology/Symbiont_density/raw_guava", pattern = "*.csv", full.names = TRUE)
 
 read_with_metadata <- function(f) {
   df <- read.csv(f, skip = 4, header = TRUE, stringsAsFactors = FALSE)
@@ -168,6 +168,19 @@ sym_counts_avg <- sym_counts %>%
          ColonyID = as.character(ColonyID)) %>%
   ungroup()
 ```
+
+May 2025
+```{r}
+sym_counts_avg_may25 <- sym_counts_avg %>%
+  filter(Timepoint == "May_2025") %>%
+    mutate(cells_cm2 = cells/10,
+          cells_cm2_M = cells_cm2 / 1e6)
+
+
+```
+
+
+
 
 Read in surface area df and add time point col 
 ```{r}
