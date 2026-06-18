@@ -23,6 +23,12 @@ Run this before running any ANOVAs
 options(contrasts = c("contr.sum", "contr.poly"))
 ```
 
+Read in colony metadata
+```{r}
+metadata <- read.csv("../data/02-Physiology/Pairs_metadata.csv")
+metadata$ColonyID <- as.character(metadata$ColonyID)
+```
+
 Read in wax surface area data 
 ```{r}
 surface_area <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
@@ -34,6 +40,11 @@ surface_area$ColonyID <- as.character(surface_area$ColonyID)
 Read in PAM data
 ```{r}
 pam <- read.csv("../data/02-Physiology/PAM/Master_datasheet_pam.csv")
+```
+
+Join with colony metadata
+```{r}
+## CHANGE COLONY_ID TO COLONYID IN PAM DF
 ```
 
 Calculate mean, sem, and sd 
@@ -182,24 +193,6 @@ sym_counts_avg_may25 <- sym_counts_avg %>%
 
 
 
-Read in surface area df and add time point col 
-```{r}
-surface_area <- read.csv("../data/Surface_Area/fragrammetry_SurfaceArea.csv")
-
-surface_area <- surface_area %>%
-  mutate(Timepoint = case_when(
-    grepl("2023-04", Date) ~ "April_2023",
-    grepl("2023-09", Date) ~ "September_2023",
-    grepl("2024-01", Date) ~ "January_2024",
-    grepl("2024-05", Date) ~ "May_2024",
-    grepl("2024-10", Date) ~ "October_2024",
-    grepl("2025-01", Date) ~ "January_2025",
-    grepl("2025-05", Date) ~ "May_2025",
-    grepl("2025-10", Date) ~ "October_2025",
-    TRUE ~ NA_character_)) %>%
-  rename(ColonyID = Colony_ID) %>%
-  filter(Project == "CAREER - Phys")
-```
 
 Merge with sym counts and calculate cells/cm2
 ```{r}
@@ -275,57 +268,143 @@ Values look slightly lower than I would expect...maybe due to the surface area b
 
 ## Chlorophyll 
 
-Read in metadata and data. 
+Read in data. 
 ```{r}
-meta_chl <- read.csv("../data/Physiology/chlorophyll/chl_metadata.csv")
-data_chl <- read.csv("../data/Physiology/chlorophyll/chl_data.csv")
+data_chl <- read.csv("../data/02-Physiology/Chlorophyll/chl_data.csv")
+data_chl$ColonyID <- as.character(data_chl$ColonyID)
 ```
 
 Merge raw data and metadata
 ```{r}
-chl <- left_join(meta_chl, data_chl, by = c("Date", "Run", "Well"))
+chl <- left_join(data_chl, metadata, by = "ColonyID")
 ```
 
-Calculate chlorophyll values 
+Calculate means of technical replicates 
 ```{r}
-chl_values <- chl %>%
-  group_by(ColonyID, Timepoint) %>%
-  summarise(mean_A630 = mean(A630),
-            mean_A663 = mean(A663),
-            mean_A750 = mean(A750)) %>%
-  mutate(chla.ug.ml = (11.43*(mean_A663-mean_A750))-(0.64*(mean_A630-mean_A750)),
-         chlc.ug.ml = (24.36*(mean_A630-mean_A750))-(3.73*(mean_A663-mean_A750)))
+chl <- chl %>%
+  group_by(Date, ColonyID, Timepoint, Phenotype, Species) %>%
+  dplyr::summarise(mean_A630 = mean(A630), # calculate means 
+            mean_A663 = mean(A663), 
+            mean_A750 = mean(A750))
 ```
 
-Read in surface area df and add time point col 
+Correct by blank
 ```{r}
-surface_area <- read.csv("../data/Surface_Area/fragrammetry_SurfaceArea.csv")
-
-surface_area <- surface_area %>%
-  mutate(Timepoint = case_when(
-    grepl("2023-04", Date) ~ "April_2023",
-    grepl("2023-09", Date) ~ "September_2023",
-    grepl("2024-01", Date) ~ "January_2024",
-    grepl("2024-05", Date) ~ "May_2024",
-    grepl("2024-10", Date) ~ "October_2024",
-    grepl("2025-01", Date) ~ "January_2025",
-    grepl("2025-05", Date) ~ "May_2025",
-    grepl("2025-10", Date) ~ "October_2025",
-    TRUE ~ NA_character_)) %>%
-  rename(ColonyID = Colony_ID) %>%
-  filter(Project == "CAREER - Phys")
+chl_corrected <- chl %>%
+  group_by(Date) %>%
+  mutate(
+    blank_750 = mean_A750[ColonyID == "Blank"][1],
+    A630_corrected = mean_A630 - blank_750,
+    A663_corrected = mean_A663 - blank_750) %>%
+  ungroup()
 ```
 
-Merge with sym counts and calculate cells/cm2
+Calculate chla and chlc2 values based on equations from Jeffrey and Humphrey 1975. units µg/ml
 ```{r}
-chl_homogenate_volume <- 10
-
-chl_values <- chl_values %>%
-  left_join(surface_area, by = c("ColonyID", "Timepoint")) %>%
-  mutate(chla.ug.cm2 = (chla.ug.ml * chl_homogenate_volume / Surface_Area_cm2),
-         chlc.ug.cm2 = (chlc.ug.ml * chl_homogenate_volume / Surface_Area_cm2)) %>%
-  select(ColonyID, Timepoint, Species, Phenotype, chla.ug.cm2, chlc.ug.cm2)
+chl_corrected <- chl_corrected %>%
+    mutate(chla.ug.ml = (11.43 * A663_corrected) - (0.64 * A630_corrected),
+           chlc2.ug.ml = (27.09 * A630_corrected) - (3.63 * A663_corrected))
 ```
+
+Plot data so far 
+```{r}
+chl_plot_data <- chl_corrected %>%
+  filter(!is.na(Timepoint)) %>%
+  mutate(Timepoint = factor(Timepoint, levels = c(
+    "April_2023", 
+    "September_2023", 
+    "January_2024", 
+    "May_2024"))) %>%
+  pivot_longer(
+    cols = c(chla.ug.ml, chlc2.ug.ml),
+    names_to = "Chlorophyll_Type",
+    values_to = "Concentration") %>%
+  mutate(Chlorophyll_Type = case_when(
+    Chlorophyll_Type == "chla.ug.ml" ~ "Chlorophyll a",
+    Chlorophyll_Type == "chlc2.ug.ml" ~ "Chlorophyll c2"))
+
+ggplot(chl_plot_data, aes(x = Timepoint, y = Concentration, fill = Phenotype)) +
+  # Boxplot for data distribution summaries
+  geom_boxplot(outlier.shape = NA, alpha = 0.6, position = position_dodge(0.8)) +
+  # Overlay individual data points to see sample sizes/spread
+  geom_point(aes(color = Phenotype), position = position_dodge(0.8), alpha = 0.6, size = 1.5) +
+  # Facet by Species (rows) and Chlorophyll Type (columns)
+  # scales = "free_y" allows Chl a and Chl c2 to have their own y-axis ranges
+  facet_grid(Chlorophyll_Type ~ Species, scales = "free_y") +
+  theme_bw() +
+  labs(
+    x = "Timepoint",
+    y = "Concentration ($\\\\mu$g/mL)",
+    title = "Chlorophyll Concentrations Across Timepoints",
+    fill = "Phenotype",
+    color = "Phenotype"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "bottom"
+  )
+```
+
+Merge with surface area data and normalize 
+```{r}
+homog_vol_ml <- 10
+
+chl_corrected <- chl_corrected %>%
+  left_join(surface_area, by = c("ColonyID", "Species", "Phenotype", "Timepoint")) %>%
+  mutate(chla.ug.cm2 = chla.ug.ml * homog_vol_ml / surface.area.cm2,
+         chlc2.ug.cm2 = chlc2.ug.ml * homog_vol_ml / surface.area.cm2)
+```
+
+Plot normalized data
+```{r}
+chl_plot_data_norm <- chl_corrected %>%
+  filter(!is.na(chla.ug.ml)) %>%
+  mutate(Timepoint = factor(Timepoint, levels = c(
+    "April_2023", 
+    "September_2023", 
+    "January_2024", 
+    "May_2024"))) %>%
+  pivot_longer(
+    cols = c(chla.ug.cm2, chlc2.ug.cm2),
+    names_to = "Chlorophyll_Type",
+    values_to = "Concentration") %>%
+  mutate(Chlorophyll_Type = case_when(
+    Chlorophyll_Type == "chla.ug.cm2" ~ "Chlorophyll a",
+    Chlorophyll_Type == "chlc2.ug.cm2" ~ "Chlorophyll c2")) #%>%
+  #filter(!Timepoint == "April_2023")
+
+ggplot(chl_plot_data_norm, aes(x = Timepoint, y = Concentration, fill = Phenotype)) +
+  # Boxplot for data distribution summaries
+  geom_boxplot(outlier.shape = NA, alpha = 0.6, position = position_dodge(0.8)) +
+  # Overlay individual data points to see sample sizes/spread
+  geom_point(aes(color = Phenotype), position = position_dodge(0.8), alpha = 0.6, size = 1.5) +
+  # Facet by Species (rows) and Chlorophyll Type (columns)
+  # scales = "free_y" allows Chl a and Chl c2 to have their own y-axis ranges
+  facet_grid(Chlorophyll_Type ~ Species, scales = "free_y") +
+  #scale_y_log10()+
+  theme_bw() +
+  labs(
+    x = "Timepoint",
+    title = "Chlorophyll Concentrations Across Timepoints",
+    fill = "Phenotype",
+    color = "Phenotype"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "bottom"
+  )
+```
+
+
+
+
+
+
+
+
+
 
 Save as csv 
 ```{r}
