@@ -302,8 +302,8 @@ chl_corrected <- chl %>%
 Calculate chla and chlc2 values based on equations from Jeffrey and Humphrey 1975. units µg/ml
 ```{r}
 chl_corrected <- chl_corrected %>%
-    mutate(chla.ug.ml = (11.43 * A663_corrected) - (0.64 * A630_corrected),
-           chlc2.ug.ml = (27.09 * A630_corrected) - (3.63 * A663_corrected))
+    mutate(chla.ug.ml = (11.43 * A663_corrected)/0.6 - (0.64 * A630_corrected)/0.6,
+           chlc2.ug.ml = (27.09 * A630_corrected)/0.6 - (3.63 * A663_corrected)/0.6)
 ```
 
 Plot data so far 
@@ -397,9 +397,6 @@ ggplot(chl_plot_data_norm, aes(x = Timepoint, y = Concentration, fill = Phenotyp
   )
 ```
 
-test test boo
-
-hello world boooo
 
 
 
@@ -475,18 +472,64 @@ afdw <- read.csv("../data/02-Physiology/AFDW/AFDW.csv")
 afdw$ColonyID <- as.character(afdw$ColonyID)
 ```
 
-Merge surface area and AFDW dfs and calculate biomass in mg/mL
+Merge with metadata
 ```{r}
-homogenate_volume <- 50
-
 afdw <- afdw %>%
+  left_join(metadata, by = "ColonyID")
+```
+
+Calculate biomass in mg/cm2
+```{r}
+homogenate_volume_ml <- 50
+
+afdw_processed <- afdw %>%
   left_join(surface_area, by = c("ColonyID", "Timepoint")) %>%
-  mutate(dry_mass_g_mL = Dry_mass_g * homogenate_volume, # Standardize dry mass to homogenate volume
-         burnt_mass_g_mL = Burnt_mass_g * homogenate_volume, # Standardize burnt mass to homogenate volume
-          dry_biomass_g = dry_mass_g_mL - Initial_mass_g, # Calculate dry biomass
-          dw_mg_cm2 = (dry_biomass_g*1000)/surface.area.cm2,
-          ash_biomass_g = dry_mass_g_mL - burnt_mass_g_mL,
-          afdw_mg_cm2 = (ash_biomass_g*1000)/surface.area.cm2)
+  mutate(
+    Dry_Tissue_Only_g = Dry_mass_g - Initial_mass_g,
+    Ash_Only_g = Burnt_mass_g - Initial_mass_g,
+    AFDW_per_mL_g = Dry_mass_g - Burnt_mass_g,
+    Total_AFDW_g = AFDW_per_mL_g * homogenate_volume_ml,
+    Total_AFDW_mg = (Total_AFDW_g * 1000),
+    Tissue_Biomass_mg_cm2 = (Total_AFDW_g * 1000) / surface.area.cm2
+  )
+```
+
+Plot data 
+```{r}
+afdw_processed <- afdw_processed %>%
+  filter(!is.na(Tissue_Biomass_mg_cm2)) %>%
+  mutate(Timepoint = factor(Timepoint, levels = c(
+    "April_2023", 
+    "September_2023", 
+    "January_2024", 
+    "May_2024",
+    "October_2024", 
+    "January_2025",
+    "May_2025",
+    "October_2025")))
+
+ggplot(afdw_processed, aes(x = Timepoint, y = Tissue_Biomass_mg_cm2, fill = Phenotype, color = Phenotype)) +
+  # Boxplot for data distribution summaries
+  geom_boxplot(outlier.shape = NA, alpha = 0.6, position = position_dodge(0.8)) +
+  # Overlay individual data points to see sample sizes/spread
+  geom_point(aes(color = Phenotype), position = position_dodge(0.8), alpha = 0.6, size = 1.5) +
+  # Facet by Species (rows) and Chlorophyll Type (columns)
+  # scales = "free_y" allows Chl a and Chl c2 to have their own y-axis ranges
+  facet_wrap(~Species, scales = "free_y") +
+  scale_color_manual(values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
+  scale_fill_manual(values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
+  theme_bw() +
+  labs(
+    x = "Timepoint",
+    y = "AFDW (mg/cm2)",
+    fill = "Phenotype",
+    color = "Phenotype"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "bottom"
+  )
 ```
 
 Save as csv 
