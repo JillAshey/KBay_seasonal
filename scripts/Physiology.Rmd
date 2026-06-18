@@ -14,6 +14,7 @@ library(tidyverse)
 library(purrr)
 library(readr)
 library(stringr)
+library(emmeans)
 ```
 
 ## Prep for analyses
@@ -37,76 +38,149 @@ surface_area$ColonyID <- as.character(surface_area$ColonyID)
 
 ## Fv/Fm
 
+### Process data 
+
 Read in PAM data
 ```{r}
-pam <- read.csv("../data/02-Physiology/PAM/Master_datasheet_pam.csv")
+pam <- read.csv("../data/02-Physiology/PAM/PAM.csv")
+pam$ColonyID <- as.character(pam$ColonyID)
 ```
 
 Join with colony metadata
 ```{r}
-## CHANGE COLONY_ID TO COLONYID IN PAM DF
+pam <- pam %>%
+  left_join(metadata, by = "ColonyID")
 ```
 
-Calculate mean, sem, and sd 
+Plot data
 ```{r}
-pam_summary <- pam %>%
-  group_by(Date, Phenotype, Species) %>%
-  summarise(
-    mean_pam = mean(Fv_Fm, na.rm = TRUE),
-    sd_pam = sd(Fv_Fm, na.rm = T),
-    se_pam = sd(Fv_Fm, na.rm = T) / sqrt(length(Fv_Fm)),
-    .groups = "drop") %>%
-  drop_na() 
-```
+pam <- pam %>%
+  filter(!is.na(Fv_Fm)) %>%
+  mutate(Timepoint = factor(Timepoint, levels = c(
+    "April_2023", 
+    "September_2023", 
+    "January_2024", 
+    "May_2024",
+    "October_2024", 
+    "January_2025",
+    "May_2025",
+    "October_2025",
+    "January_2026")))
 
-Plot! 
-```{r}
-# Set levels 
-pam_summary$Date <- factor(pam_summary$Date, levels = c(
-                                                                        "September_2023",
-                                                                        "January_2024", 
-                                                                        "May_2024",
-                                                                        "October_2024", 
-                                                                        "January_2025", 
-                                                                        "May_2025",
-                                                                        "October_2025",
-                                                                        "January_2026"))
-
-ggplot(pam_summary, aes(x = Date, y = mean_pam, color = Phenotype, group = Phenotype)) +
-  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
-  geom_errorbar(aes(ymin = mean_pam - se_pam, ymax = mean_pam + se_pam, color = Phenotype),
-                width = 0.3, linewidth = 0.8) +  # color matches points/lines
-  facet_wrap(~ Species) +
-  #facet_grid(rows = vars(Species)) +
-  scale_color_manual(
-    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
-  ) +
-  theme_classic(base_size = 16) +  # bigger base size
+ggplot(pam, aes(x = Timepoint, y = Fv_Fm, fill = Phenotype, color = Phenotype, shape = PAM_type)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6, position = position_dodge(0.8)) +
+  geom_point(aes(color = Phenotype), position = position_dodge(0.8), alpha = 0.6, size = 1.5) +
+  facet_wrap(~Species, scales = "free_y") +
+  scale_color_manual(values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
+  scale_fill_manual(values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
+  theme_bw() +
   labs(
-    x = "",
+    x = "Timepoint",
     y = "Fv/Fm",
+    fill = "Phenotype",
     color = "Phenotype"
   ) +
-theme(
-    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
-    strip.text = element_text(face = "italic", size = 16),
-    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
-    legend.position = "right",
-    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
-    legend.key = element_blank(),    
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 13),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 13, color = "black"),
-    axis.text.y = element_text(size = 13, color = "black"),
-    axis.title.y = element_text(size = 16)
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "right"
   )
 ```
 
+### Stats
 
+#### Mcap
 
+Subset by Mcap only 
+```{r}
+pam_mcap <- pam %>%
+  filter(Species == "Montipora capitata")
+```
+
+Check for normality
+```{r}
+hist(pam_mcap$Fv_Fm)
+
+# Q-Q Plot
+qqnorm(pam_mcap$Fv_Fm)
+qqline(pam_mcap$Fv_Fm, col = "red")
+
+# Shapiro-Wilk Test
+shapiro.test(pam_mcap$Fv_Fm)
+```
+
+Normal enough.
+
+Run linear mixed effects model 
+```{r}
+pam.mcap.model <- lme4::lmer(Fv_Fm ~ Timepoint * Phenotype + (1|ColonyID), data = pam_mcap)
+car::Anova(pam.mcap.model, type = 3)
+
+# Model normality 
+par(mfrow = c(1, 2)) 
+plot(pam.mcap.model, which = 1) 
+lattice::qqmath(pam.mcap.model)
+
+# Post hoc tests 
+emmeans(pam.mcap.model, pairwise ~ Timepoint)
+
+# Check plot to make sure results make sense
+ggplot(pam_mcap, aes(x = Timepoint, y = Fv_Fm, color = Phenotype, group = Phenotype, shape = PAM_type)) +
+  stat_summary(fun = mean, geom = "point") +
+  stat_summary(fun = mean, geom = "line") +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.1) +
+  facet_wrap(~Species) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+```
+
+#### Pcomp
+
+Subset by Pcomp only 
+```{r}
+pam_pcomp <- pam %>%
+  filter(Species == "Porites compressa")
+```
+
+Check for normality
+```{r}
+hist(pam_pcomp$Fv_Fm)
+
+# Q-Q Plot
+qqnorm(pam_pcomp$Fv_Fm)
+qqline(pam_pcomp$Fv_Fm, col = "red")
+
+# Shapiro-Wilk Test
+shapiro.test(pam_pcomp$Fv_Fm)
+```
+
+Normal.
+
+Run linear mixed effects model 
+```{r}
+pam.pcomp.model <- lme4::lmer(Fv_Fm ~ Timepoint * Phenotype + (1|ColonyID), data = pam_pcomp)
+car::Anova(pam.pcomp.model, type = 3)
+
+# Model normality 
+par(mfrow = c(1, 2)) 
+plot(pam.pcomp.model, which = 1) 
+lattice::qqmath(pam.pcomp.model)
+
+# Post hoc tests 
+emmeans(pam.pcomp.model, pairwise ~ Timepoint)
+emmeans(pam.pcomp.model, pairwise ~ Phenotype)
+emmeans(pam.pcomp.model, pairwise ~ Timepoint | Phenotype)
+emmeans(pam.pcomp.model, pairwise ~ Phenotype | Timepoint)
+
+# Check plot to make sure results make sense
+ggplot(pam_pcomp, aes(x = Timepoint, y = Fv_Fm, color = Phenotype, group = Phenotype, shape = PAM_type)) +
+  stat_summary(fun = mean, geom = "point") +
+  stat_summary(fun = mean, geom = "line") +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.1) +
+  facet_wrap(~Species) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+```
 
 ## Sym counts 
 
@@ -119,7 +193,8 @@ meta_sym <- meta_sym %>%
   mutate(
     Run = str_replace_all(Run, "\\s+", ""),  # "Run 1" -> "Run1"
     Well = str_trim(Well),
-    Date = as.character(Date))
+    Date = as.character(Date),
+    ColonyID = as.character(ColonyID))
 ```
 
 Read in raw data from guava
@@ -159,7 +234,7 @@ combined_df <- combined_df %>%
   )
 ```
 
-Merge raw data and metadata
+Merge raw data and guava metadata. Merge w/ colony metadata as well
 ```{r}
 sym_counts <- left_join(meta_sym, combined_df, by = c("Date", "Run", "Well"))
 ```
@@ -173,12 +248,17 @@ sym_counts <- sym_counts %>%
 Calculate mean counts per sample and number of cells per sample 
 ```{r}
 sym_counts_avg <- sym_counts %>%
+  left_join(metadata, by = "ColonyID") %>%
   group_by(Date, Run, Dilution, Timepoint, Pellet_Resuspend_Vol_mL, ColonyID) %>%
   summarise(mean_cells_mL = mean(CHLOROPHYLL.POS.Concentration.Concentration.for.CHLOROPHYLL.POS...cells.mL., na.rm = T))%>%
   mutate(cells = Dilution * Pellet_Resuspend_Vol_mL * mean_cells_mL,
          ColonyID = as.character(ColonyID)) %>%
   ungroup()
 ```
+
+
+CHECK CALCULATIONS AND ADD 
+
 
 May 2025
 ```{r}
@@ -194,13 +274,13 @@ sym_counts_avg_may25 <- sym_counts_avg %>%
 
 
 
-Merge with sym counts and calculate cells/cm2
+Merge with surface area and calculate cells/cm2
 ```{r}
 sym_counts_avg <- sym_counts_avg %>%
   left_join(surface_area, by = c("ColonyID", "Timepoint")) 
 
 sym_counts_avg <- sym_counts_avg %>%
-  mutate(cells_cm2 = cells/Surface_Area_cm2,
+  mutate(cells_cm2 = cells/surface.area.cm2,
           cells_cm2_M = cells_cm2 / 1e6) %>%
   select(ColonyID, Timepoint, Species, Phenotype, Dilution, cells_cm2, cells_cm2_M)
 ```
