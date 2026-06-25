@@ -257,7 +257,7 @@ sym_counts_avg <- sym_counts %>%
 ```
 
 
-CHECK CALCULATIONS AND ADD 
+CHECK CALCULATIONS AND ADD manual counts
 
 
 May 2025
