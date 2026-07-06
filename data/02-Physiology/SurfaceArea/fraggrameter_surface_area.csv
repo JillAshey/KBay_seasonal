@@ -1,0 +1,422 @@
+Date,Project,ColonyID,surface_area_cm2_fraggrameter,Notes
+2023-04-15,CAREER - Phys,1,27.57,Wax dipped
+2023-09-14,CAREER - Phys,1,20.03687937,
+2024-01-20,CAREER - Phys,1,24.16317003,
+2024-05-09,CAREER - Phys,1,23.8873267,
+2024-10-01,CAREER - Phys,1,15.70630826,
+2025-01-09,CAREER - Phys,1,12.93963472,
+2025-05-08,CAREER - Phys,1,21.44760345,
+2023-04-15,CAREER - Phys,2,14.66,Wax dipped
+2023-09-14,CAREER - Phys,2,20.18991445,
+2024-01-20,CAREER - Phys,2,24.41382674,
+2024-05-09,CAREER - Phys,2,17.01745478,Chamber vol for May 2024 from https://docs.google.com/spreadsheets/d/13gIjPfTB01INNaudqHc24-o7gXok3zQx2ttnW5mRKAw/edit?gid=0#gid=0 and cross-referencing round and zub # to Run and light zub # from https://docs.google.com/spreadsheets/d/13g-BwexGEIjBTK7elHVnbd9stiIZstRwJwRray-T18Y/edit?gid=0#gid=0. SA for May 2024 from NSF_Career_May_Phys_mesh_measure
+2024-10-01,CAREER - Phys,2,22.72692876,
+2025-01-09,CAREER - Phys,2,17.54709409,
+2025-05-08,CAREER - Phys,2,19.84785402,
+2023-04-15,CAREER - Phys,3,10.4,Wax dipped
+2023-09-15,CAREER - Phys,3,18.19752998,
+2024-01-20,CAREER - Phys,3,13.92469729,
+2024-05-09,CAREER - Phys,3,10.30313478,
+2024-10-02,CAREER - Phys,3,15.54114824,Coral 3 (chamber 5) is a sad nub
+2025-01-09,CAREER - Phys,3,6.583136094,Chamber vol for Jan 2025 from https://docs.google.com/spreadsheets/d/1lez5iBINVi3tjcowenmlMVcdq3d2JUWCKHbAvpJcZgU/edit?gid=0#gid=0 and cross-referencing round and zub # to Run and light zub # from https://docs.google.com/spreadsheets/d/1E3QAKFHJU8Dky9mAnQ6DuLwcaJeigrLag4_3-VOz4zA/edit?gid=0#gid=0. SA for Jan 2025 has not been received from Spencer yet
+2025-05-08,CAREER - Phys,3,NA,"Stir bar kept stopping, data probably not usable; No SA values recorded for this frag; avged the Mcap SAs from other frags to get SA for 3"
+2023-04-15,CAREER - Phys,4,15.14,Wax dipped
+2023-09-15,CAREER - Phys,4,17.00914233,
+2024-01-21,CAREER - Phys,4,19.50035567,
+2024-05-09,CAREER - Phys,4,15.12469012,
+2024-10-02,CAREER - Phys,4,22.49835562,
+2025-01-09,CAREER - Phys,4,9.663832697,
+2025-05-08,CAREER - Phys,4,18.25277406,No SA values recorded for this frag; avged the Mcap SAs from other frags to get SA for 4
+2023-04-15,CAREER - Phys,11,12.24,Wax dipped
+2023-04-15,CAREER - Phys,12,12.8,Wax dipped
+2024-01-21,CAREER - Phys,12,22.73053391,
+2024-05-09,CAREER - Phys,12,11.38822611,
+2024-10-02,CAREER - Phys,12,20.71953384,
+2025-01-09,CAREER - Phys,12,8.383567763,
+2025-05-08,CAREER - Phys,12,12.07297033,
+2023-04-15,CAREER - Phys,15,12.63,Wax dipped
+2023-04-15,CAREER - Phys,16,18.03,Wax dipped
+2023-04-15,CAREER - Phys,19,26.16,Wax dipped
+2023-09-14,CAREER - Phys,19,19.07264971,
+2024-01-20,CAREER - Phys,19,19.39694291,
+2024-05-09,CAREER - Phys,19,14.86164023,No SA values recorded for this frag; avged the Mcap SAs from other frags to get SA for 213
+2024-10-01,CAREER - Phys,19,17.83537582,
+2025-01-09,CAREER - Phys,19,19.51943262,
+2025-05-08,CAREER - Phys,19,20.54693193,
+2023-04-15,CAREER - Phys,20,16.62,Wax dipped
+2023-09-14,CAREER - Phys,20,20.10320527,
+2024-01-20,CAREER - Phys,20,23.95422348,
+2024-05-09,CAREER - Phys,20,13.60426395,
+2024-10-01,CAREER - Phys,20,18.4008163,Weird spike in channel 8 to >350 during run 1 - looks like 1 reading that will have to be removed
+2025-01-09,CAREER - Phys,20,9.591847972,
+2025-05-08,CAREER - Phys,20,11.2851565,
+2023-04-15,CAREER - Phys,26,14.17,Wax dipped
+2023-09-15,CAREER - Phys,26,15.40563432,
+2024-01-20,CAREER - Phys,26,18.25138944,
+2024-05-10,CAREER - Phys,26,15.46836427,
+2024-10-02,CAREER - Phys,26,16.48570331,
+2025-01-09,CAREER - Phys,26,24.82633366,
+2025-05-08,CAREER - Phys,26,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 26
+2023-04-15,CAREER - Phys,27,18.19,Wax dipped
+2023-09-15,CAREER - Phys,27,17.70534214,
+2024-01-20,CAREER - Phys,27,23.38202144,Channel 9 looked funny during 0% light level
+2024-05-10,CAREER - Phys,27,12.12639197,No volume recorded so avged Pcomp data to get volume for 27
+2024-10-02,CAREER - Phys,27,14.92532344,
+2025-01-09,CAREER - Phys,27,25.42651795,
+2025-05-08,CAREER - Phys,27,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 27
+2023-04-15,CAREER - Phys,28,16.7,Wax dipped
+2023-09-15,CAREER - Phys,28,17.7588614,
+2024-01-20,CAREER - Phys,28,17.16597635,Alkalinity data says this sample vol was spilled so avged Pcomp data to get volume for 28
+2024-05-09,CAREER - Phys,28,20.74603859,
+2024-10-02,CAREER - Phys,28,15.69024154,
+2025-01-09,CAREER - Phys,28,16.15603182,Spike in 6 and 7 because realized the temp probes were switched. Placed in correct spots. 7 is the blank
+2025-05-08,CAREER - Phys,28,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 28
+2023-04-15,CAREER - Phys,29,17.26,Wax dipped
+2023-09-15,CAREER - Phys,29,16.02065751,
+2024-01-21,CAREER - Phys,29,25.67355999,
+2024-05-09,CAREER - Phys,29,18.41687099,
+2024-10-01,CAREER - Phys,29,11.56906683,
+2025-01-09,CAREER - Phys,29,10.22854452,
+2025-05-08,CAREER - Phys,29,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 29
+2023-04-15,CAREER - Phys,41,13.45,Wax dipped
+2023-09-15,CAREER - Phys,41,17.8726339,
+2024-01-20,CAREER - Phys,41,18.58050535,
+2024-05-09,CAREER - Phys,41,13.6883119,
+2024-10-02,CAREER - Phys,41,12.04215007,
+2025-05-08,CAREER - Phys,41,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 41
+2023-04-15,CAREER - Phys,42,9.63,Wax dipped
+2023-09-15,CAREER - Phys,42,14.09270789,
+2024-01-20,CAREER - Phys,42,20.86350227,
+2024-05-09,CAREER - Phys,42,12.67211562,
+2024-10-02,CAREER - Phys,42,22.58229084,
+2025-05-08,CAREER - Phys,42,16.62082926,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 42
+2023-04-15,CAREER - Phys,43,18.09,Wax dipped
+2023-09-15,CAREER - Phys,43,19.40321854,
+2024-01-20,CAREER - Phys,43,21.13585694,
+2024-05-09,CAREER - Phys,43,25.70665753,
+2024-10-02,CAREER - Phys,43,18.67272616,
+2025-01-09,CAREER - Phys,43,18.64981456,
+2025-05-08,CAREER - Phys,43,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 43
+2023-04-15,CAREER - Phys,44,11.12,Wax dipped
+2023-09-15,CAREER - Phys,44,14.93810056,
+2024-01-20,CAREER - Phys,44,14.05941331,
+2024-05-09,CAREER - Phys,44,16.3326135,
+2024-10-01,CAREER - Phys,44,14.00518542,
+2025-01-09,CAREER - Phys,44,10.77992369,
+2025-05-08,CAREER - Phys,44,14.34298723,No SA values recorded for this frag; avged the Pcomp SAs from other frags to get SA for 44
+2023-04-15,CAREER - Phys,45,18.11,Wax dipped
+2023-09-15,CAREER - Phys,45,16.52711027,
+2024-01-21,CAREER - Phys,45,16.81304653,
+2023-04-15,CAREER - Phys,46,13.95,Wax dipped
+2023-09-15,CAREER - Phys,46,19.41592567,
+2024-01-21,CAREER - Phys,46,28.47249303,
+2023-04-15,CAREER - Phys,201,15.39,Wax dipped
+2023-09-15,CAREER - Phys,201,18.06108049,
+2024-01-20,CAREER - Phys,201,25.88782546,
+2024-05-09,CAREER - Phys,201,14.80356317,
+2024-10-02,CAREER - Phys,201,14.49304936,
+2025-01-09,CAREER - Phys,201,20.32709837,
+2025-05-08,CAREER - Phys,201,11.25776496,
+2023-04-15,CAREER - Phys,202,13.61,Wax dipped
+2023-09-15,CAREER - Phys,202,19.49749671,
+2024-01-21,CAREER - Phys,202,38.02202589,
+2024-05-09,CAREER - Phys,202,20.99775316,
+2024-10-02,CAREER - Phys,202,19.52862146,
+2025-01-09,CAREER - Phys,202,10.87738545,
+2025-05-08,CAREER - Phys,202,20.63938771,
+2023-04-15,CAREER - Phys,203,16.61,Wax dipped
+2023-09-15,CAREER - Phys,203,21.90329564,
+2024-01-21,CAREER - Phys,203,17.06858134,
+2024-05-10,CAREER - Phys,203,20.67721028,
+2024-10-01,CAREER - Phys,203,12.64374774,
+2025-01-09,CAREER - Phys,203,14.66955651,
+2025-05-08,CAREER - Phys,203,6.689773558,
+2023-04-15,CAREER - Phys,204,12.2,Wax dipped
+2023-09-15,CAREER - Phys,204,19.58648586,
+2024-01-20,CAREER - Phys,204,18.82415589,
+2024-05-10,CAREER - Phys,204,15.3952052,
+2024-10-02,CAREER - Phys,204,18.1310987,
+2025-01-09,CAREER - Phys,204,4.471058452,
+2025-05-08,CAREER - Phys,204,21.83959592,
+2023-09-15,CAREER - Phys,205,15.61989935,
+2024-01-20,CAREER - Phys,205,14.12422623,Chamber vol for Jan 2024 from https://docs.google.com/spreadsheets/d/1tjkoaUArNFC3PiGT3smRiLyQ7VJbQL7_AO2v9Z_5uqg/edit?gid=0#gid=0 and cross-referencing round and zub # to Run and light zub # from https://docs.google.com/spreadsheets/d/115YI12L3dGhRy9tNkagiD-8E3X8a-X0MBHTqjxPKh6o/edit?gid=0#gid=0. SA for Jan 2024 from Jan_Phys_T0_mesh_measure
+2024-05-10,CAREER - Phys,205,17.06653679,
+2024-10-02,CAREER - Phys,205,21.09619635,
+2025-01-09,CAREER - Phys,205,2.612351816,12:56pm Bubble on probe 5
+2025-05-08,CAREER - Phys,205,26.7455347,
+2023-04-15,CAREER - Phys,206,16.77,Wax dipped
+2023-09-15,CAREER - Phys,206,14.22479098,
+2024-01-20,CAREER - Phys,206,15.4556613,
+2024-05-10,CAREER - Phys,206,17.37311968,
+2024-10-02,CAREER - Phys,206,35.72815658,
+2025-01-09,CAREER - Phys,206,2.85733959,
+2025-05-08,CAREER - Phys,206,19.71425138,
+2023-04-15,CAREER - Phys,207,14.37,Wax dipped
+2023-04-15,CAREER - Phys,208,16.47,Wax dipped
+2023-04-15,CAREER - Phys,209,15.42,Wax dipped
+2023-09-15,CAREER - Phys,209,21.48497365,
+2024-01-20,CAREER - Phys,209,25.30017054,
+2024-05-09,CAREER - Phys,209,14.40480292,
+2024-10-02,CAREER - Phys,209,21.80519223,
+2025-01-09,CAREER - Phys,209,1.966670678,
+2025-05-08,CAREER - Phys,209,29.05540257,
+2023-04-15,CAREER - Phys,210,14.23,Wax dipped
+2023-09-15,CAREER - Phys,210,22.84494431,
+2024-01-21,CAREER - Phys,210,21.25520366,
+2024-05-09,CAREER - Phys,210,23.43746972,
+2024-10-01,CAREER - Phys,210,32.95859532,
+2025-01-09,CAREER - Phys,210,2.146571642,
+2025-05-08,CAREER - Phys,210,16.89215684,
+2023-04-15,CAREER - Phys,211,14.15,Wax dipped
+2023-09-14,CAREER - Phys,211,15.44132248,
+2024-01-21,CAREER - Phys,211,25.49841239,
+2024-05-09,CAREER - Phys,211,30.93802277,
+2024-10-01,CAREER - Phys,211,30.60379201,
+2025-01-09,CAREER - Phys,211,3.039359453,
+2025-05-08,CAREER - Phys,211,12.92747515,
+2023-04-15,CAREER - Phys,212,14.88,Wax dipped
+2023-09-14,CAREER - Phys,212,13.92379016,
+2024-01-20,CAREER - Phys,212,12.95589027,
+2023-04-15,CAREER - Phys,213,12.49,Wax dipped
+2023-09-14,CAREER - Phys,213,17.98726514,No SA values recorded for this frag; avged the Mcap SAs from other frags to get SA for 213
+2024-01-21,CAREER - Phys,213,19.12683178,
+2024-05-09,CAREER - Phys,213,14.5135692,
+2024-10-02,CAREER - Phys,213,12.40056307,
+2025-01-09,CAREER - Phys,213,3.971200048,
+2025-05-08,CAREER - Phys,213,24.97326333,
+2023-04-15,CAREER - Phys,214,12.46,Wax dipped
+2023-09-14,CAREER - Phys,214,16.11632924,
+2024-01-20,CAREER - Phys,214,10.36015277,"Lid came off during run (at 60% light level); Channel 8 (colony #214) lid got loose during 60% light level, and the data is probably unusable from 60% onwards. While we were getting the bubble off, the stir bars kind of stopped only for a few measurements. "
+2024-05-09,CAREER - Phys,214,16.89921559,
+2024-10-02,CAREER - Phys,214,15.08071422,
+2025-01-09,CAREER - Phys,214,2.453920728,
+2025-05-08,CAREER - Phys,214,16.84629821,Chamber vol for May 2025 from https://docs.google.com/spreadsheets/d/1ynUEL58zBLLtYkHcnG4ZssgsjUJf6HJE8lvM_JxutIM/edit?gid=0#gid=0 and cross-referencing round and zub # to Run and light zub # from https://docs.google.com/spreadsheets/d/1FRW4BGAmn3yW8qYeTmIi_E8RQmw-t8Nx4o4o9Cgf9BA/edit?gid=0#gid=0. SA for May 2025 has not been received from Spencer yet
+2023-04-15,CAREER - Phys,217,14.77,Wax dipped
+2023-04-15,CAREER - Phys,218,11.52,Wax dipped
+2023-04-15,CAREER - Phys,219,10.94,Wax dipped
+2023-09-14,CAREER - Phys,219,14.68375978,
+2024-01-20,CAREER - Phys,219,24.17025675,
+2024-05-09,CAREER - Phys,219,14.12551911,
+2024-10-02,CAREER - Phys,219,28.12657827,
+2025-01-09,CAREER - Phys,219,2.40672041,
+2025-05-08,CAREER - Phys,219,12.97586276,
+2023-04-15,CAREER - Phys,220,12.02,Wax dipped
+2023-09-14,CAREER - Phys,220,16.3527826,Chamber vol for Sept 2023 from https://docs.google.com/spreadsheets/d/1ER5cb2uHWlQ6L5Ifs1Rq18BrPqLYbu8kD4qvk5cz5Ts/edit?gid=0#gid=0; SA for Sept 2023 from Phys_T0_frags_20230914_mesh_measure
+2024-01-21,CAREER - Phys,220,19.41339906,
+2024-05-09,CAREER - Phys,220,13.2102446,
+2024-10-02,CAREER - Phys,220,19.59918146,
+2025-01-09,CAREER - Phys,220,2.246373042,
+2025-05-08,CAREER - Phys,220,24.46794204,
+2023-04-15,CAREER - Phys,221,11.32,Wax dipped
+2023-09-14,CAREER - Phys,221,15.39503037,
+2024-01-21,CAREER - Phys,221,21.29399255,
+2024-05-09,CAREER - Phys,221,15.34615645,
+2024-10-01,CAREER - Phys,221,32.11543505,
+2025-01-09,CAREER - Phys,221,1.901368408,"100% light level - 3 not showing a huge range, may not be usable. Will have space to rerun in later runs → maybe ok in the end, not putting into last run"
+2025-05-08,CAREER - Phys,221,16.57748179,
+2023-04-15,CAREER - Phys,222,10.53,Wax dipped
+2023-04-15,CAREER - Phys,225,12.77,Wax dipped
+2023-09-15,CAREER - Phys,225,14.89756981,
+2024-01-20,CAREER - Phys,225,34.29266037,
+2024-05-09,CAREER - Phys,225,11.15342628,
+2024-10-01,CAREER - Phys,225,15.21781843,Chamber vol for Oct 2024 from https://docs.google.com/spreadsheets/d/1R0-TyAcboxFTtLoDb6nWnYPre-5XvpxwE3oYr60r_tY/edit?gid=0#gid=0 and cross-referencing round and zub # to Run and light zub # from https://docs.google.com/spreadsheets/d/1DUCUtOtR5XBqLom39beU_QuXFvvkWVFyXAmRK-CAvsY/edit?gid=0#gid=0. SA for Oct 2024 from 2024_10_Phys_Frags_mesh_measure
+2025-01-09,CAREER - Phys,225,3.806781994,Spike in 6 and 7 because realized the temp probes were switched. Placed in correct spots. 7 is the blank
+2025-05-08,CAREER - Phys,225,13.84966634,
+2023-04-15,CAREER - Phys,226,11.35,Wax dipped
+2023-09-15,CAREER - Phys,226,18.51332616,
+2024-01-20,CAREER - Phys,226,31.72903393,
+2024-05-09,CAREER - Phys,226,10.29816918,
+2024-10-01,CAREER - Phys,226,27.21767863,
+2025-01-09,CAREER - Phys,226,4.062392645,
+2025-05-08,CAREER - Phys,226,6.344232824,
+2023-04-15,CAREER - Phys,233,15.66,Wax dipped
+2023-09-15,CAREER - Phys,233,15.22419622,
+2024-01-20,CAREER - Phys,233,22.96669098,
+2024-05-09,CAREER - Phys,233,17.54015736,
+2024-10-02,CAREER - Phys,233,17.24946632,
+2025-01-09,CAREER - Phys,233,2.571067936,
+2025-05-08,CAREER - Phys,233,18.03866498,
+2023-04-15,CAREER - Phys,234,13.98,Wax dipped
+2023-09-15,CAREER - Phys,234,17.66764385,
+2024-01-21,CAREER - Phys,234,21.38402958,
+2024-05-10,CAREER - Phys,234,12.9367376,
+2024-10-02,CAREER - Phys,234,14.39613008,
+2025-01-09,CAREER - Phys,234,5.545107802,
+2025-05-08,CAREER - Phys,234,10.39038065,
+2023-04-15,CAREER - Phys,235,23.89,Wax dipped
+2023-09-14,CAREER - Phys,235,13.25828415,
+2024-01-21,CAREER - Phys,235,28.93156248,
+2024-05-09,CAREER - Phys,235,14.9971933,
+2024-10-01,CAREER - Phys,235,21.26253706,
+2025-01-09,CAREER - Phys,235,5.335792456,
+2025-05-08,CAREER - Phys,235,16.64198678,
+2023-04-15,CAREER - Phys,236,12.91,Wax dipped
+2023-09-14,CAREER - Phys,236,16.30973371,
+2024-01-21,CAREER - Phys,236,22.4353766,
+2024-05-09,CAREER - Phys,236,9.368837674,
+2024-10-01,CAREER - Phys,236,15.27020073,
+2025-01-09,CAREER - Phys,236,4.655785654,
+2025-05-08,CAREER - Phys,236,19.75105953,
+2023-04-15,CAREER - Phys,237,12.17,Wax dipped
+2023-09-14,CAREER - Phys,237,18.20289831,
+2024-01-20,CAREER - Phys,237,18.95672166,
+2024-05-09,CAREER - Phys,237,13.75445841,
+2024-10-02,CAREER - Phys,237,15.17385271,
+2025-01-09,CAREER - Phys,237,3.339037518,
+2025-05-08,CAREER - Phys,237,18.19990454,
+2023-04-15,CAREER - Phys,238,12.11,Wax dipped
+2023-09-14,CAREER - Phys,238,17.00661431,
+2024-01-20,CAREER - Phys,238,14.89105046,
+2024-05-09,CAREER - Phys,238,15.68677224,
+2024-10-02,CAREER - Phys,238,16.96565616,
+2025-01-09,CAREER - Phys,238,4.180827585,
+2025-05-08,CAREER - Phys,238,12.59052663,
+2023-09-15,CAREER - Phys,239,16.25144609,
+2024-01-20,CAREER - Phys,239,19.02971119,
+2024-05-09,CAREER - Phys,239,12.59344577,
+2024-10-02,CAREER - Phys,239,24.0200572,
+2025-01-09,CAREER - Phys,239,3.283235052,
+2025-05-08,CAREER - Phys,239,10.31630341,
+2023-04-15,CAREER - Phys,240,19.17,Wax dipped
+2023-09-15,CAREER - Phys,240,18.72882124,
+2024-01-21,CAREER - Phys,240,13.99913436,
+2024-05-09,CAREER - Phys,240,17.9693712,
+2024-10-02,CAREER - Phys,240,20.30379454,
+2025-01-09,CAREER - Phys,240,3.190855294,
+2025-05-08,CAREER - Phys,240,15.17823682,
+2023-04-15,CAREER - Phys,241,10.82,Wax dipped
+2023-09-15,CAREER - Phys,241,16.51704508,
+2024-01-21,CAREER - Phys,241,28.11625177,
+2024-05-09,CAREER - Phys,241,17.98665129,
+2024-10-01,CAREER - Phys,241,16.27613884,
+2025-01-09,CAREER - Phys,241,3.791095544,
+2025-05-08,CAREER - Phys,241,17.16397822,
+2023-04-15,CAREER - Phys,242,12.55,Wax dipped
+2023-09-15,CAREER - Phys,242,15.24890162,
+2024-01-21,CAREER - Phys,242,21.465022,
+2024-05-09,CAREER - Phys,242,18.86977768,
+2024-10-02,CAREER - Phys,242,13.52751801,
+2025-01-09,CAREER - Phys,242,4.267812757,
+2025-05-08,CAREER - Phys,242,11.98276695,
+2023-04-15,CAREER - Phys,243,7.75,Wax dipped
+2023-09-14,CAREER - Phys,243,15.69865511,
+2024-01-20,CAREER - Phys,243,22.46313393,
+2024-05-09,CAREER - Phys,243,13.25647411,
+2024-10-01,CAREER - Phys,243,25.95685695,
+2025-01-09,CAREER - Phys,243,4.186318624,
+2025-05-08,CAREER - Phys,243,17.53422151,
+2023-09-14,CAREER - Phys,244,16.63741579,
+2024-01-20,CAREER - Phys,244,21.92403319,
+2024-05-09,CAREER - Phys,244,11.06936777,
+2024-10-02,CAREER - Phys,244,30.34749347,
+2025-01-09,CAREER - Phys,244,4.230231261,
+2025-05-08,CAREER - Phys,244,11.80094631,
+2023-09-14,CAREER - Phys,247,16.78110869,
+2024-01-20,CAREER - Phys,247,24.34787308,
+2024-05-10,CAREER - Phys,247,17.44069787,
+2024-10-01,CAREER - Phys,247,13.70596193,
+2025-01-09,CAREER - Phys,247,4.358764492,
+2025-05-08,CAREER - Phys,247,20.32601415,
+2023-04-15,CAREER - Phys,248,18.64,Wax dipped
+2023-09-14,CAREER - Phys,248,16.07244613,
+2024-01-21,CAREER - Phys,248,19.57250727,
+2024-05-10,CAREER - Phys,248,13.87499244,
+2024-10-01,CAREER - Phys,248,26.9466151,
+2025-01-09,CAREER - Phys,248,5.60646175,
+2025-05-08,CAREER - Phys,248,9.378906006,
+2025-10-03,CAREER - Phys,1,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,2,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,3,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,4,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,12,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,19,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,20,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,26,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,27,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,28,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,29,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,41,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,42,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,43,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,44,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,45,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,46,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,201,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,202,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,203,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,204,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,205,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,206,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,209,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,210,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,211,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,212,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,213,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,214,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,219,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,220,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,221,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,225,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,226,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,233,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,234,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,235,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,236,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,237,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,238,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,239,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,240,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,241,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,242,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,243,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,244,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,247,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2025-10-03,CAREER - Phys,248,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,1,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,2,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,3,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,4,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,12,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,19,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,20,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,26,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,27,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,28,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,29,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,41,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,42,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,43,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,44,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,45,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,46,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,201,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,202,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,203,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,204,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,205,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,206,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,209,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,210,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,211,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,212,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,213,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,214,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,219,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,220,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,221,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,225,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,226,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,233,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,234,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,235,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,236,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,237,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,238,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,239,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,240,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,241,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,242,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,243,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,244,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,247,20,Dummy values for SA for now - do not have fraggrameter SA data yet
+2026-01-25,CAREER - Phys,248,20,Dummy values for SA for now - do not have fraggrameter SA data yet

@@ -9,15 +9,27 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(ggpubr) 
+```
+
+Read in colony metadata
+```{r}
+metadata <- read.csv("../data/02-Physiology/Pairs_metadata.csv")
+metadata$ColonyID <- as.character(metadata$ColonyID)
 ```
 
 ## Wax dipping method 
 
 Load wax data and calculate change in weight 
 ```{r}
-wax_data <- read.csv("../data/02-Physiology/SurfaceArea/SurfaceArea_wax.csv")
+wax_data <- read.csv("../data/02-Physiology/SurfaceArea/wax_surface_area.csv")
 wax_data <- wax_data %>%
   mutate(delta.mass.g = With_wax_weight_g - Without_wax_weight_g)
+```
+
+Merge with colony metadata 
+```{r}
+wax_data <- left_join(wax_data, metadata, by = "ColonyID")
 ```
 
 Calculate surface area for standards
@@ -63,3 +75,83 @@ Save as csv
 ```{r}
 write.csv(wax_data_samp, "../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
 ```
+
+## Comparison of wax dipping and fraggrameter surface areas
+
+Read in wax calculations
+```{r}
+wax <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
+wax$ColonyID <- as.character(wax$ColonyID)
+wax <- wax[,-1] # remove extra weird column 
+
+# Select specific cols 
+wax <- wax %>%
+  select(ColonyID, Species, Phenotype, Timepoint, surface.area.cm2, Notes)
+```
+
+Read in fraggrameter SA data
+```{r}
+frag <- read.csv("../data/02-Physiology/SurfaceArea/fraggrameter_surface_area.csv")
+frag$ColonyID <- as.character(frag$ColonyID)
+
+# Assign dates to timepoint and select specific cols
+frag <- frag %>%
+  mutate(Timepoint = case_when(
+    Date == "2023-04-15" ~ "April_2023",
+    Date == "2023-09-14" ~ "September_2023",
+    Date == "2024-01-20" ~ "January_2024",
+    Date == "2024-01-21" ~ "January_2024",
+    Date == "2024-05-09" ~ "May_2024",
+    Date == "2024-05-10" ~ "May_2024",
+    Date == "2024-10-01" ~ "October_2024",
+    Date == "2024-10-02" ~ "October_2024",
+    Date == "2025-01-09" ~ "January_2025",
+    Date == "2025-05-08" ~ "May_2025",
+    Date == "2023-09-15" ~ "September_2023",
+    Date == "2025-10-03" ~ "October_2025",
+    Date == "2026-01-25" ~ "January_2025")) %>%
+  select(ColonyID, surface_area_cm2_fraggrameter, Timepoint, Notes)
+
+# Merge with meta
+#frag <- left_join(frag, metadata, by = "ColonyID")
+```
+
+Merge wax and frag data by timepoint and colonyID
+```{r}
+both <- left_join(wax, frag, by = c("ColonyID", "Timepoint"))
+```
+
+Compare 
+```{r}
+ggplot(both, aes(x = surface.area.cm2, y = surface_area_cm2_fraggrameter)) +
+  geom_point(aes(color = Phenotype), alpha = 0.7, size = 2.5) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray50") +
+  stat_regline_equation(
+    aes(label =  paste(..eq.label.., ..rr.label.., sep = "~~~~")),
+    label.x = -Inf,       # Places text on the absolute left edge
+    label.y = Inf,        # Places text on the absolute top edge
+    hjust = -0.1,         # Slightly nudges text inwards away from the left border
+    vjust = 1.5           # Slightly nudges text downwards away from the top border
+  ) +
+  facet_grid(Species ~ Timepoint) +
+  labs(
+    title = "Surface Area Measurement Comparison",
+    x = "Wax Dipped Surface Area (cm²)",
+    y = "Fraggrameter Surface Area (cm²)",
+    color = "Phenotype"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 11),
+    legend.position = "bottom"
+  )
+```
+
+Save as csv 
+```{r}
+write.csv(both, "../output/02-Physiology/SurfaceArea/SurfaceArea_both_methods.csv")
+```
+
+
+
+
