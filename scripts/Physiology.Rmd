@@ -383,7 +383,8 @@ Calculate chla and chlc2 values based on equations from Jeffrey and Humphrey 197
 ```{r}
 chl_corrected <- chl_corrected %>%
     mutate(chla.ug.ml = (11.43 * A663_corrected)/0.6 - (0.64 * A630_corrected)/0.6,
-           chlc2.ug.ml = (27.09 * A630_corrected)/0.6 - (3.63 * A663_corrected)/0.6)
+           chlc2.ug.ml = (27.09 * A630_corrected)/0.6 - (3.63 * A663_corrected)/0.6) %>%
+    filter(!is.na(Species)) # remove blanks from df
 ```
 
 Plot data so far 
@@ -394,7 +395,8 @@ chl_plot_data <- chl_corrected %>%
     "April_2023", 
     "September_2023", 
     "January_2024", 
-    "May_2024"))) %>%
+    "May_2024",
+    "October_2024"))) %>%
   pivot_longer(
     cols = c(chla.ug.ml, chlc2.ug.ml),
     names_to = "Chlorophyll_Type",
@@ -444,7 +446,8 @@ chl_plot_data_norm <- chl_corrected %>%
     "April_2023", 
     "September_2023", 
     "January_2024", 
-    "May_2024"))) %>%
+    "May_2024",
+    "October_2024"))) %>%
   pivot_longer(
     cols = c(chla.ug.cm2, chlc2.ug.cm2),
     names_to = "Chlorophyll_Type",
@@ -477,23 +480,14 @@ ggplot(chl_plot_data_norm, aes(x = Timepoint, y = Concentration, fill = Phenotyp
   )
 ```
 
-
-
-
-
-
-
-
-
-
 Save as csv 
 ```{r}
-write.csv(chl_values, "../output/Physiology/chlorophyll.csv")
+write.csv(chl_corrected, "../output/02-Physiology/Chlorophyll/chlorophyll.csv")
 ```
 
 Calculate mean, sem, and sd 
 ```{r}
-chl_summary <- chl_values %>%
+chl_summary <- chl_corrected %>%
   group_by(Timepoint, Phenotype, Species) %>%
   summarise(
     mean_chla = mean(chla.ug.cm2, na.rm = TRUE),
@@ -509,7 +503,8 @@ Plot!
 chl_summary$Timepoint <- factor(chl_summary$Timepoint, levels = c("April_2023",
                                                                         "September_2023",
                                                                         "January_2024", 
-                                                                        "May_2024"))
+                                                                        "May_2024",
+                                                                        "October_2024"))
 
 ggplot(chl_summary, aes(x = Timepoint, y = mean_chla, color = Phenotype, group = Phenotype)) +
   #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
