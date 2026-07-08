@@ -52,39 +52,75 @@ pam <- pam %>%
   left_join(metadata, by = "ColonyID")
 ```
 
+Calculate mean, sem, and sd 
+```{r}
+pam_summary <- pam %>%
+  group_by(Timepoint, Phenotype, Species) %>%
+  summarise(
+    mean_fvfm = mean(Fv_Fm, na.rm = TRUE),
+    sd_fvfm = sd(Fv_Fm, na.rm = T),
+    se_fvfm = sd(Fv_Fm, na.rm = T) / sqrt(length(Fv_Fm)),
+    .groups = "drop") %>%
+  drop_na()# %>%
+  #filter(Light == "Light")
+  #filter(!Timepoint == "Jan25") # remove Jan25 for now 
+```
+
 Plot data
 ```{r}
-pam <- pam %>%
-  filter(!is.na(Fv_Fm)) %>%
-  mutate(Timepoint = factor(Timepoint, levels = c(
-    "April_2023", 
-    "September_2023", 
-    "January_2024", 
-    "May_2024",
-    "October_2024", 
-    "January_2025",
-    "May_2025",
-    "October_2025",
-    "January_2026")))
+pam_summary$Timepoint <- gsub("_", " ", pam_summary$Timepoint)
 
-ggplot(pam, aes(x = Timepoint, y = Fv_Fm, fill = Phenotype, color = Phenotype, shape = PAM_type)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.6, position = position_dodge(0.8)) +
-  geom_point(aes(color = Phenotype), position = position_dodge(0.8), alpha = 0.6, size = 1.5) +
-  facet_wrap(~Species, scales = "free_y") +
-  scale_color_manual(values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
-  scale_fill_manual(values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")) +
-  theme_bw() +
+pam_summary <- pam_summary %>%
+  #filter(!is.na(Fv_Fm)) %>%
+  mutate(Timepoint = factor(Timepoint, levels = c(
+    "April 2023", 
+    "September 2023", 
+    "January 2024", 
+    "May 2024",
+    "October 2024", 
+    "January 2025",
+    "May 2025",
+    "October 2025",
+    "January 2026")))
+
+y_label <- expression(bold(F[v]/F[m]))
+pam_plot <- ggplot(pam_summary, aes(x = Timepoint, y = mean_fvfm, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_fvfm - se_fvfm, ymax = mean_fvfm + se_fvfm, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0.4, 0.8, by = 0.05)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
   labs(
-    x = "Timepoint",
-    y = "Fv/Fm",
-    fill = "Phenotype",
+    x = "",
+    y = y_label,
     color = "Phenotype"
   ) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.text = element_text(face = "bold", size = 10),
-    legend.position = "right"
-  )
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); pam_plot
+
+ggsave("../output/02-Physiology/PAM/PAM_KBay.png", 
+       plot = pam_plot, width = 20, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PAM/PAM_KBay.pdf", 
+       plot = pam_plot, width = 20, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
 ### Stats
@@ -237,6 +273,9 @@ combined_df <- combined_df %>%
 Merge raw data and guava metadata. Merge w/ colony metadata as well
 ```{r}
 sym_counts <- left_join(meta_sym, combined_df, by = c("Date", "Run", "Well"))
+
+sym_counts <- sym_counts %>%
+  left_join(metadata, by = "ColonyID")
 ```
 
 Remove samples marked "Do not use"
@@ -248,103 +287,138 @@ sym_counts <- sym_counts %>%
 Calculate mean counts per sample and number of cells per sample 
 ```{r}
 sym_counts_avg <- sym_counts %>%
-  left_join(metadata, by = "ColonyID") %>%
-  group_by(Date, Run, Dilution, Timepoint, Pellet_Resuspend_Vol_mL, ColonyID) %>%
-  summarise(mean_cells_mL = mean(CHLOROPHYLL.POS.Concentration.Concentration.for.CHLOROPHYLL.POS...cells.mL., na.rm = T))%>%
-  mutate(cells = Dilution * Pellet_Resuspend_Vol_mL * mean_cells_mL,
-         ColonyID = as.character(ColonyID)) %>%
-  ungroup()
-```
-
-
-CHECK CALCULATIONS AND ADD manual counts
-
-
-May 2025
-```{r}
-sym_counts_avg_may25 <- sym_counts_avg %>%
-  filter(Timepoint == "May_2025") %>%
-    mutate(cells_cm2 = cells/10,
-          cells_cm2_M = cells_cm2 / 1e6)
-
-
-```
-
-
-
-
-
-Merge with surface area and calculate cells/cm2
-```{r}
-sym_counts_avg <- sym_counts_avg %>%
-  left_join(surface_area, by = c("ColonyID", "Timepoint")) 
-
-sym_counts_avg <- sym_counts_avg %>%
+  mutate(across(starts_with("CHLOROPHYLL.POS.Concentration"), ~ as.numeric(as.character(.)))) %>%
+  filter(!is.na(pick(starts_with("CHLOROPHYLL.POS.Concentration"))[[1]])) %>%
+  group_by(Date, Run, Timepoint, ColonyID, Species, Phenotype, Pellet_Resuspend_Vol_mL) %>%
+  summarise(
+    mean_cells_mL = mean(pick(starts_with("CHLOROPHYLL.POS.Concentration"))[[1]], na.rm = TRUE),
+    cells = mean_cells_mL * unique(Pellet_Resuspend_Vol_mL),
+    .groups = "drop") %>%
+  full_join(surface_area, by = c("ColonyID", "Timepoint")) %>%
+  mutate(surface.area.cm2 = ifelse(is.na(surface.area.cm2), 10, surface.area.cm2)) %>%
   mutate(cells_cm2 = cells/surface.area.cm2,
           cells_cm2_M = cells_cm2 / 1e6) %>%
-  select(ColonyID, Timepoint, Species, Phenotype, Dilution, cells_cm2, cells_cm2_M)
+  filter(ColonyID != "blank" & !is.na(ColonyID)) %>%
+  rename(Phenotype = Phenotype.x, Species = Species.x) %>%
+  select(Timepoint, ColonyID, Species, Phenotype, cells_cm2, cells_cm2_M)
+```
+
+Some samples were manually counted when the guava was down. Read in and process manual data 
+```{r}
+# Read in data 
+sym_manual <- read.csv("../data/02-Physiology/Symbiont_density/manual_sym_counts.csv", header = T)
+sym_manual$ColonyID <- as.character(sym_manual$ColonyID)
+
+sym_manual_calc <- sym_manual %>%
+  mutate(Dilution = ifelse(is.na(Dilution), 1, Dilution)) %>%
+  dplyr::select(ColonyID, Timepoint, Squares.Counted, Dilution, matches("Count[0-9]")) %>%
+  pivot_longer(cols = starts_with("Count"), names_to = "rep", values_to = "val") %>%
+  group_by(ColonyID, Timepoint, Squares.Counted, Dilution) %>%
+  dplyr::summarise(mean_val = mean(val, na.rm = TRUE), .groups = "drop") %>%
+  left_join(surface_area, by = c("ColonyID", "Timepoint")) %>%
+  mutate(
+    # 1. Cells per mL in the counting tube
+    cells.mL = (mean_val / Squares.Counted) * 10000 * Dilution,
+    
+    # 2. Total cells in the original 10mL slurry
+    # If the manual count was done on the same 1mL aliquot resuspended in 0.9mL SDS:
+    cells = cells.mL * 0.9 * (10 / 1.0), 
+    
+    cells_cm2 = cells / surface.area.cm2,
+    cells_cm2_M = cells_cm2 / 1e6) %>%
+  select(Timepoint, ColonyID, Species, Phenotype, cells_cm2, cells_cm2_M)
+```
+
+The following October 2025 samples need to be removed from the `sym_counts_avg` guava counts, as we will be using the hemocytometer counts for them: 202, 244, 2, 41, 240, 248, 239, 28, 225, 209, 236, 20, 243, 235, 205, 3, 237, 206, 204, 1, 247.
+
+Filter the above samples from the guava df 
+```{r}
+to_remove <- c("202", "244", "2", "41", "240", "248", "239", "28", "225", 
+               "209", "236", "20", "243", "235", "205", "3", "237", 
+               "206", "204", "1", "247")
+
+sym_counts_avg_filt <- sym_counts_avg %>%
+  filter(!(Timepoint == "October_2025" & ColonyID %in% to_remove))
+```
+
+Bind dfs together
+```{r}
+sym_data <- rbind(sym_counts_avg_filt, sym_manual_calc)
 ```
 
 Save as csv 
 ```{r}
-write.csv(sym_counts_avg, "../output/Physiology/sym_density.csv")
+write.csv(sym_data, "../output/02-Physiology/Symbiont_density/sym_density.csv")
 ```
 
 Calculate mean, sem, and sd 
 ```{r}
-sym_summary <- sym_counts_avg %>%
+sym_summary <- sym_data %>%
   group_by(Timepoint, Phenotype, Species) %>%
   summarise(
     mean_sym = mean(cells_cm2_M, na.rm = TRUE),
     sd_sym = sd(cells_cm2_M, na.rm = T),
     se_sym = sd(cells_cm2_M, na.rm = T) / sqrt(length(cells_cm2_M)),
     .groups = "drop") %>%
-  drop_na() 
+  drop_na()
 ```
 
-Plot! 
+Plot!
 ```{r}
-# Set levels 
-sym_summary$Timepoint <- factor(sym_summary$Timepoint, levels = c("April_2023",
-                                                                        "September_2023",
-                                                                        "January_2024", 
-                                                                        "May_2024",
-                                                                        "October_2024",
-                                                                        "January_2025"))
+sym_summary$Timepoint <- gsub("_", " ", sym_summary$Timepoint)
 
-ggplot(sym_summary, aes(x = Timepoint, y = mean_sym, color = Phenotype, group = Phenotype)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
+# Set levels 
+sym_summary$Timepoint <- factor(sym_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025"))
+
+y_label <- expression(bold(paste("Symbiont density (", 10^6, " cells ", cm^-2, ")")))
+sym_plot <- ggplot(sym_summary, aes(x = Timepoint, y = mean_sym, color = Phenotype, group = Phenotype)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
   geom_errorbar(aes(ymin = mean_sym - se_sym, ymax = mean_sym + se_sym, color = Phenotype),
-                width = 0.3, linewidth = 0.8) +  # color matches points/lines
-  facet_wrap(~ Species) +
-  #facet_grid(rows = vars(Species)) +
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(-2, 10, by = 0.2)) +
   scale_color_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
   ) +
-  theme_classic(base_size = 16) +  # bigger base size
+  theme_classic() +  
   labs(
     x = "",
-    y = "Sym density (10^6 x cells/cm2)",
+    y = y_label,
     color = "Phenotype"
   ) +
 theme(
     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
     strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
-    strip.text = element_text(face = "italic", size = 16),
+    strip.text = element_text(face = "bold.italic", size = 24),
     #legend.position = c(0.85, 0.83),  # adjust x, y for placement
     legend.position = "right",
     legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
     legend.key = element_blank(),    
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 13),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 13, color = "black"),
-    axis.text.y = element_text(size = 13, color = "black"),
-    axis.title.y = element_text(size = 16)
-  )
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); sym_plot
+
+ggsave("../output/02-Physiology/Symbiont_density/Symbiont_density_KBay.png", 
+       plot = sym_plot, width = 20, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Symbiont_density/Symbiont_density_KBay.pdf", 
+       plot = sym_plot, width = 20, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
-Values look slightly lower than I would expect...maybe due to the surface area being based on the fraggameter? Need the wax dipped SA. 
+Plot looks really weird...need to check the math and data. 
+
 
 ## Chlorophyll 
 
@@ -396,7 +470,8 @@ chl_plot_data <- chl_corrected %>%
     "September_2023", 
     "January_2024", 
     "May_2024",
-    "October_2024"))) %>%
+    "October_2024",
+    "January_2025"))) %>%
   pivot_longer(
     cols = c(chla.ug.ml, chlc2.ug.ml),
     names_to = "Chlorophyll_Type",
@@ -447,7 +522,8 @@ chl_plot_data_norm <- chl_corrected %>%
     "September_2023", 
     "January_2024", 
     "May_2024",
-    "October_2024"))) %>%
+    "October_2024", 
+    "January_2025"))) %>%
   pivot_longer(
     cols = c(chla.ug.cm2, chlc2.ug.cm2),
     names_to = "Chlorophyll_Type",
@@ -499,44 +575,54 @@ chl_summary <- chl_corrected %>%
 
 Plot! 
 ```{r}
-# Set levels 
-chl_summary$Timepoint <- factor(chl_summary$Timepoint, levels = c("April_2023",
-                                                                        "September_2023",
-                                                                        "January_2024", 
-                                                                        "May_2024",
-                                                                        "October_2024"))
+chl_summary$Timepoint <- gsub("_", " ", chl_summary$Timepoint)
 
-ggplot(chl_summary, aes(x = Timepoint, y = mean_chla, color = Phenotype, group = Phenotype)) +
+# Set levels 
+chl_summary$Timepoint <- factor(chl_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025"))
+
+y_label <- expression(bold(paste("Chlorophyll-a (", mu, "g ", cm^-2, ")")))
+chl_plot <- ggplot(chl_summary, aes(x = Timepoint, y = mean_chla, color = Phenotype, group = Phenotype)) +
   #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
   geom_errorbar(aes(ymin = mean_chla - se_chla, ymax = mean_chla + se_chla, color = Phenotype),
-                width = 0.3, linewidth = 0.8) +  # color matches points/lines
-  facet_wrap(~ Species) +
-  #facet_grid(rows = vars(Species)) +
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(-2, 30, by = 5)) +
   scale_color_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
   ) +
-  theme_classic(base_size = 16) +  # bigger base size
+  theme_classic() +  
   labs(
     x = "",
-    y = "Chlorophyll-a (ug/cm2)",
+    y = y_label,
     color = "Phenotype"
   ) +
 theme(
     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
     strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
-    strip.text = element_text(face = "italic", size = 16),
+    strip.text = element_text(face = "bold.italic", size = 24),
     #legend.position = c(0.85, 0.83),  # adjust x, y for placement
     legend.position = "right",
     legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
     legend.key = element_blank(),    
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 13),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 13, color = "black"),
-    axis.text.y = element_text(size = 13, color = "black"),
-    axis.title.y = element_text(size = 16)
-  )
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); chl_plot
+
+ggsave("../output/02-Physiology/Chlorophyll/Chlorophyll_KBay.png", 
+       plot = chl_plot, width = 18, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Chlorophyll/Chlorophyll_KBay.pdf", 
+       plot = chl_plot, width = 18, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
 ## AFDW
@@ -565,8 +651,9 @@ afdw_processed <- afdw %>%
     AFDW_per_mL_g = Dry_mass_g - Burnt_mass_g,
     Total_AFDW_g = AFDW_per_mL_g * homogenate_volume_ml,
     Total_AFDW_mg = (Total_AFDW_g * 1000),
-    Tissue_Biomass_mg_cm2 = (Total_AFDW_g * 1000) / surface.area.cm2
-  )
+    Tissue_Biomass_mg_cm2 = (Total_AFDW_g * 1000) / surface.area.cm2) %>%
+  rename(Phenotype = Phenotype.x, Species = Species.x) %>%
+  select(Timepoint, ColonyID, Species, Phenotype, Tissue_Biomass_mg_cm2)
 ```
 
 Plot data 
@@ -609,63 +696,72 @@ ggplot(afdw_processed, aes(x = Timepoint, y = Tissue_Biomass_mg_cm2, fill = Phen
 
 Save as csv 
 ```{r}
-write.csv(afdw, "../output/02-Physiology/AFDW/AFDW_calculations.csv")
+write.csv(afdw_processed, "../output/02-Physiology/AFDW/AFDW.csv")
 ```
 
 Calculate mean, sem, and sd 
 ```{r}
-afdw_summary <- afdw %>%
+afdw_summary <- afdw_processed %>%
   group_by(Timepoint, Phenotype, Species) %>%
   summarise(
-    mean_afdw = mean(afdw_mg_cm2, na.rm = TRUE),
-    sd_afdw = sd(afdw_mg_cm2, na.rm = T),
-    se_afdw = sd(afdw_mg_cm2, na.rm = T) / sqrt(length(afdw_mg_cm2)),
+    mean_afdw = mean(Tissue_Biomass_mg_cm2, na.rm = TRUE),
+    sd_afdw = sd(Tissue_Biomass_mg_cm2, na.rm = T),
+    se_afdw = sd(Tissue_Biomass_mg_cm2, na.rm = T) / sqrt(length(Tissue_Biomass_mg_cm2)),
     .groups = "drop") %>%
-  drop_na() 
+  drop_na() %>%
+  filter(!Timepoint == "May_2025")
 ```
 
 Plot! 
 ```{r}
-# Set levels 
-afdw_summary$Timepoint <- factor(afdw_summary$Timepoint, levels = c("April_2023",
-                                                                        "September_2023",
-                                                                        "January_2024", 
-                                                                        "May_2024",
-                                                                        "October_2024", 
-                                                                        "January_2025", 
-                                                                        "October_2025"))
+afdw_summary$Timepoint <- gsub("_", " ", afdw_summary$Timepoint)
 
-ggplot(afdw_summary, aes(x = Timepoint, y = mean_afdw, color = Phenotype, group = Phenotype)) +
-  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
+# Set levels 
+afdw_summary$Timepoint <- factor(afdw_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "October 2025"))
+
+y_label <- expression(bold(paste("Biomass (mg ",cm^-2, ")")))
+afdw_plot <- ggplot(afdw_summary, aes(x = Timepoint, y = mean_afdw, color = Phenotype, group = Phenotype)) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
   geom_errorbar(aes(ymin = mean_afdw - se_afdw, ymax = mean_afdw + se_afdw, color = Phenotype),
-                width = 0.3, linewidth = 0.8) +  # color matches points/lines
-  facet_wrap(~ Species) +
-  #facet_grid(rows = vars(Species)) +
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 10, by = 2)) +
   scale_color_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
   ) +
-  theme_classic(base_size = 16) +  # bigger base size
+  theme_classic() +  
   labs(
     x = "",
-    y = "Biomass (mg/cm2)",
+    y = y_label,
     color = "Phenotype"
   ) +
 theme(
     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
     strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
-    strip.text = element_text(face = "italic", size = 16),
+    strip.text = element_text(face = "bold.italic", size = 24),
     #legend.position = c(0.85, 0.83),  # adjust x, y for placement
     legend.position = "right",
     legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
     legend.key = element_blank(),    
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 13),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 13, color = "black"),
-    axis.text.y = element_text(size = 13, color = "black"),
-    axis.title.y = element_text(size = 16)
-  )
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); afdw_plot
+
+ggsave("../output/02-Physiology/AFDW/AFDW_KBay.png", 
+       plot = afdw_plot, width = 20, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/AFDW/AFDW_KBay.pdf", 
+       plot = afdw_plot, width = 20, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
 ## Protein & MAAs
@@ -826,44 +922,52 @@ prot_summary <- prot %>%
 
 Plot! 
 ```{r}
-# Set levels 
-prot_summary$Timepoint <- factor(chl_summary$Timepoint, levels = c("April_2023",
-                                                                        "September_2023",
-                                                                        "January_2024", 
-                                                                        "May_2024",
-                                                                        "October_2024"))
+prot_summary$Timepoint <- gsub("_", " ", prot_summary$Timepoint)
 
-ggplot(prot_summary, aes(x = Timepoint, y = mean_prot, color = Phenotype, group = Phenotype)) +
-  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
+# Set levels 
+prot_summary$Timepoint <- factor(prot_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024"))
+
+y_label <- expression(bold(paste("Protein (mg ",cm^-2, ")")))
+prot_plot <- ggplot(prot_summary, aes(x = Timepoint, y = mean_prot, color = Phenotype, group = Phenotype)) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
   geom_errorbar(aes(ymin = mean_prot - se_prot, ymax = mean_prot + se_prot, color = Phenotype),
-                width = 0.3, linewidth = 0.8) +  # color matches points/lines
-  facet_wrap(~ Species) +
-  #facet_grid(rows = vars(Species)) +
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 10, by = 2)) +
   scale_color_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
   ) +
-  theme_classic(base_size = 16) +  # bigger base size
+  theme_classic() +  
   labs(
     x = "",
-    y = "Protein (mg/cm2)",
+    y = y_label,
     color = "Phenotype"
   ) +
 theme(
     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
     strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
-    strip.text = element_text(face = "italic", size = 16),
+    strip.text = element_text(face = "bold.italic", size = 24),
     #legend.position = c(0.85, 0.83),  # adjust x, y for placement
     legend.position = "right",
     legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
     legend.key = element_blank(),    
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 13),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 13, color = "black"),
-    axis.text.y = element_text(size = 13, color = "black"),
-    axis.title.y = element_text(size = 16)
-  )
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); prot_plot
+
+ggsave("../output/02-Physiology/Protein/Protein_KBay.png", 
+       plot = prot_plot, width = 20, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Protein/Protein_KBay.pdf", 
+       plot = prot_plot, width = 20, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
 

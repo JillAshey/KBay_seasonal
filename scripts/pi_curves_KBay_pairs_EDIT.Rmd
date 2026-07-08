@@ -2823,51 +2823,198 @@ ggplot(all_time_int_filt, aes(x = Light_Value, y = Slope_norm, color = Phenotype
 Read in calculated pi curve metrics 
 ```{r}
 pi_metrics_sept2023 <- read.csv("../output/02-Physiology/PI_curves/Sept2023/pi_curve_metrics_Sept2023.csv")
-pi_metrics_sept2023$Timepoint <- "Sept23"
+pi_metrics_sept2023$Timepoint <- "September 2023"
+pi_metrics_sept2023 <- pi_metrics_sept2023 %>%
+    rename(Phenotype = Phenotype.x, Species = Species.x) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_jan2024 <- read.csv("../output/02-Physiology/PI_curves/Jan2024/pi_curve_metrics_Jan2024.csv")
-pi_metrics_jan2024$Timepoint <- "Jan24"
+pi_metrics_jan2024$Timepoint <- "January 2024"
+pi_metrics_jan2024 <- pi_metrics_jan2024 %>%
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_may2024 <- read.csv("../output/02-Physiology/PI_curves/May2024/pi_curve_metrics_May2024.csv")
-pi_metrics_may2024$Timepoint <- "May24"
+pi_metrics_may2024$Timepoint <- "May 2024"
+pi_metrics_may2024 <- pi_metrics_may2024 %>%
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_oct2024 <- read.csv("../output/02-Physiology/PI_curves/Oct2024/pi_curve_metrics_Oct2024.csv")
-pi_metrics_oct2024$Timepoint <- "Oct24"
+pi_metrics_oct2024$Timepoint <- "October 2024"
+pi_metrics_oct2024 <- pi_metrics_oct2024 %>%
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_jan2025 <- read.csv("../output/02-Physiology/PI_curves/Jan2025/pi_curve_metrics_Jan2025.csv")
-pi_metrics_jan2025$Timepoint <- "Jan25"
+pi_metrics_jan2025$Timepoint <- "January 2025"
 pi_metrics_jan2025 <- pi_metrics_jan2025 %>% 
-  select(-c("...11", "...12", "...13"))
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_may2025 <- read.csv("../output/02-Physiology/PI_curves/May2025/pi_curve_metrics_May2025.csv")
-pi_metrics_may2025$Timepoint <- "May25"
+pi_metrics_may2025$Timepoint <- "May 2025"
+pi_metrics_may2025 <- pi_metrics_may2025 %>%
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_oct2025 <- read.csv("../output/02-Physiology/PI_curves/Oct2025/pi_curve_metrics_Oct2025.csv")
-pi_metrics_oct2025$Timepoint <- "Oct25"
+pi_metrics_oct2025$Timepoint <- "October 2025"
+pi_metrics_oct2025 <- pi_metrics_oct2025 %>%
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_jan2026 <- read.csv("../output/02-Physiology/PI_curves/Jan2026/pi_curve_metrics_Jan2026.csv")
-pi_metrics_jan2026$Timepoint <- "Jan26"
+pi_metrics_jan2026$Timepoint <- "January 2026"
 pi_metrics_jan2026 <- pi_metrics_jan2026 %>% 
-  select(-c("...11", "...12", "...13"))
+  rename(ColonyID = Colony_ID) %>%
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 
 pi_metrics_may2026 <- read.csv("../output/02-Physiology/PI_curves/May2026/pi_curve_metrics_May2026.csv")
-pi_metrics_may2026$Timepoint <- "May26"
+pi_metrics_may2026$Timepoint <- "May 2026"
 pi_metrics_may2026 <- pi_metrics_may2026 %>% 
-  select(-c("...11", "...12", "...13")) %>%
-  rename(Colony_ID = ColonyID)
+  select(ColonyID, Pmax, alpha, Rd, Ik, Pgross, Species, Phenotype, Timepoint)
 ```
 
 Bind data together 
 ```{r}
-all_time_pi_metrics <- rbind(pi_metrics_jan2024, pi_metrics_may2024, pi_metrics_oct2024, pi_metrics_jan2025, pi_metrics_may2025, pi_metrics_oct2025, pi_metrics_jan2026, pi_metrics_may2026)
-
-# pi_metrics_sept2023
+all_time_pi_metrics <- rbind(pi_metrics_sept2023, pi_metrics_jan2024, pi_metrics_may2024, pi_metrics_oct2024, pi_metrics_jan2025, pi_metrics_may2025, pi_metrics_oct2025, pi_metrics_jan2026, pi_metrics_may2026)
 ```
 
-Remove Jan25 for now (still need SA)
+Calculate mean, sem, and sd of Pmax
 ```{r}
-# all_time_pi_metrics <- all_time_pi_metrics %>%
-#   filter(!Timepoint == "Jan25")
+pmax_summary <- all_time_pi_metrics %>%
+  group_by(Timepoint, Phenotype, Species) %>%
+  summarise(
+    mean_pmax = mean(Pmax, na.rm = TRUE),
+    sd_pmax = sd(Pmax, na.rm = T),
+    se_pmax = sd(Pmax, na.rm = T) / sqrt(length(Pmax)),
+    .groups = "drop") %>%
+  drop_na()# %>%
+  #filter(Light == "Light")
+  #filter(!Timepoint == "Jan25") # remove Jan25 for now 
+```
+
+Plot!
+```{r}
+# Set levels 
+pmax_summary$Timepoint <- factor(pmax_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Maximum photosynthesis (", mu, "mol O"[2], " ", cm^-2, " ", hr^-1, ")")))
+pmax_plot <- ggplot(pmax_summary, aes(x = Timepoint, y = mean_pmax, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_pmax - se_pmax, ymax = mean_pmax + se_pmax, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 4.5, by = 0.5)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); pmax_plot
+
+ggsave("../output/02-Physiology/PI_curves/Pmax_KBay.png", 
+       plot = pmax_plot, width = 20, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/Pmax_KBay.pdf", 
+       plot = pmax_plot, width = 20, height = 10, units = "in", device = "pdf", dpi = 300)
+```
+
+Calculate mean, sem, and sd of Rd
+```{r}
+rd_summary <- all_time_pi_metrics %>%
+  group_by(Timepoint, Phenotype, Species) %>%
+  summarise(
+    mean_rd = mean(Rd, na.rm = TRUE),
+    sd_rd = sd(Rd, na.rm = T),
+    se_rd = sd(Rd, na.rm = T) / sqrt(length(Rd)),
+    .groups = "drop") %>%
+  drop_na()# %>%
+  #filter(Light == "Light")
+  #filter(!Timepoint == "Jan25") # remove Jan25 for now 
+```
+
+Plot!
+```{r}
+# Set levels 
+rd_summary$Timepoint <- factor(rd_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Light-enhanced dark respiration (", mu, "mol O"[2], " ", cm^-2, " ", hr^-1, ")")))
+rd_plot <- ggplot(rd_summary, aes(x = Timepoint, y = mean_rd, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_rd - se_rd, ymax = mean_rd + se_rd, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  facet_grid(cols = vars(Species)) +
+  #scale_y_continuous(breaks = seq(-0.5, 4, by = 0.5)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); rd_plot
+
+ggsave("../output/02-Physiology/PI_curves/LEDR_KBay.png", 
+       plot = rd_plot, width = 20, height = 10.5, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/LEDR_KBay.pdf", 
+       plot = rd_plot, width = 20, height = 10.5, units = "in", device = "pdf", dpi = 300)
 ```
 
 
