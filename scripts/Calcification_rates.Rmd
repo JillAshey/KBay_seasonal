@@ -265,6 +265,262 @@ ggsave("../output/02-Physiology/Calcification/Calcification_light_KBay.pdf",
        plot = light_calc, width = 20, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
+Plot separately by spp 
+```{r}
+### Mcap 
+joined_summary_light_mcap <- joined_summary_light %>%
+  filter(Species == "Montipora capitata")
+
+# Set levels 
+joined_summary_light_mcap$Timepoint <- factor(joined_summary_light_mcap$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
+light_calc_mcap <- ggplot(joined_summary_light_mcap, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_calc - se_calc, ymax = mean_calc + se_calc, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 0.5, by = 0.1)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); light_calc_mcap
+
+ggsave("../output/02-Physiology/Calcification/Calcification_light_KBay_Mcap.png", 
+       plot = light_calc_mcap, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Calcification/Calcification_light_KBay_Mcap.pdf", 
+       plot = light_calc_mcap, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+joined_summary_light_pcomp <- joined_summary_light %>%
+  filter(Species == "Porites compressa")
+
+# Set levels 
+joined_summary_light_pcomp$Timepoint <- factor(joined_summary_light_pcomp$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
+light_calc_pcomp <- ggplot(joined_summary_light_pcomp, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_calc - se_calc, ymax = mean_calc + se_calc, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(-2, 10, by = 0.2)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); light_calc_pcomp
+
+ggsave("../output/02-Physiology/Calcification/Calcification_light_KBay_Pcomp.png", 
+       plot = light_calc_pcomp, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Calcification/Calcification_light_KBay_Pcomp.pdf", 
+       plot = light_calc_pcomp, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+```
+
+Average across season 
+```{r}
+joined_season_summary <- joined %>%
+  mutate(Season = case_when(
+    Timepoint == "April_2023" ~ "Spring",
+    Timepoint == "September_2023" ~ "Fall",
+    Timepoint == "January_2024" ~ "Winter",
+    Timepoint == "May_2024" ~ "Spring", 
+    Timepoint == "October_2024" ~ "Fall",
+    Timepoint == "January_2025" ~ "Winter", 
+    Timepoint == "May_2025" ~ "Spring",
+    Timepoint == "October_2025" ~ "Fall", 
+    Timepoint == "January_2026" ~ "Winter",
+    Timepoint == "May_2026" ~ "Spring")) %>%
+  group_by(Season, Phenotype, Species, Light) %>%
+  summarise(
+    mean_calc = mean(Net_Calcification_cm2, na.rm = TRUE),
+    sd_calc = sd(Net_Calcification_cm2, na.rm = T),
+    se_calc = sd(Net_Calcification_cm2, na.rm = T) / sqrt(length(Net_Calcification_cm2)),
+    .groups = "drop") %>%
+  drop_na()
+```
+
+Plot across season by spp 
+```{r}
+### Mcap 
+joined_season_light_summary_mcap <- joined_season_summary %>%
+  filter(Species == "Montipora capitata") %>%
+  filter(Light == "Light")
+
+# Set levels 
+joined_season_light_summary_mcap$Season <- factor(joined_season_light_summary_mcap$Season, levels = c("Winter", "Spring", "Fall"))
+
+y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
+calc_season_plot_mcap <- ggplot(joined_season_light_summary_mcap, aes(x = Season, y = mean_calc, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_calc - se_calc, ymax = mean_calc + se_calc, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  #scale_y_continuous(breaks = seq(-0.3, -1.3, by = -0.2)) +
+  scale_y_continuous() +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(hjust = 0.5, vjust = 0, size = 20, color = "black"),
+    axis.text.y = element_text(size = 22, color = "black"),
+    axis.title.y = element_text(size = 24, face = "bold")
+); calc_season_plot_mcap
+
+ggsave("../output/02-Physiology/Calcification/Calcification_light_seasonal_KBay_Mcap.png", 
+       plot = calc_season_plot_mcap, width = 12, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Calcification/Calcification_light_seasonal_KBay_Mcap.pdf", 
+       plot = calc_season_plot_mcap, width = 12, height = 8, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+joined_season_light_summary_pcomp <- joined_season_summary %>%
+  filter(Species == "Porites compressa") %>%
+  filter(Light == "Light")
+
+# Set levels 
+joined_season_light_summary_pcomp$Season <- factor(joined_season_light_summary_pcomp$Season, levels = c("Winter", "Spring", "Fall"))
+
+y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
+calc_season_plot_pcomp <- ggplot(joined_season_light_summary_pcomp, aes(x = Season, y = mean_calc, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_calc - se_calc, ymax = mean_calc + se_calc, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  #scale_y_continuous(breaks = seq(-0.3, -1.3, by = -0.2)) +
+  scale_y_continuous() +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(hjust = 0.5, vjust = 0, size = 20, color = "black"),
+    axis.text.y = element_text(size = 22, color = "black"),
+    axis.title.y = element_text(size = 24, face = "bold")
+); calc_season_plot_pcomp
+
+ggsave("../output/02-Physiology/Calcification/Calcification_light_seasonal_KBay_Pcomp.png", 
+       plot = calc_season_plot_pcomp, width = 12, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Calcification/Calcification_light_seasonal_KBay_Pcomp.pdf", 
+       plot = calc_season_plot_pcomp, width = 12, height = 8, units = "in", device = "pdf", dpi = 300)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Plot dark only 
 ```{r}
 joined_summary_dark <- joined_summary %>%
@@ -324,7 +580,118 @@ ggsave("../output/02-Physiology/Calcification/Calcification_dark_KBay.pdf",
        plot = dark_calc, width = 20, height = 8, units = "in", device = "pdf", dpi = 300)
 ```
 
+Plot separately by spp 
+```{r}
+### Mcap 
+joined_summary_dark_mcap <- joined_summary_dark %>%
+  filter(Species == "Montipora capitata")
 
+# Set levels 
+joined_summary_dark_mcap$Timepoint <- factor(joined_summary_dark_mcap$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
+dark_calc_mcap <- ggplot(joined_summary_dark_mcap, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_calc - se_calc, ymax = mean_calc + se_calc, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 0.5, by = 0.1)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); dark_calc_mcap
+
+ggsave("../output/02-Physiology/Calcification/Calcification_dark_KBay_Mcap.png", 
+       plot = dark_calc_mcap, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Calcification/Calcification_dark_KBay_Mcap.pdf", 
+       plot = dark_calc_mcap, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+joined_summary_dark_pcomp <- joined_summary_dark %>%
+  filter(Species == "Porites compressa")
+
+# Set levels 
+joined_summary_dark_pcomp$Timepoint <- factor(joined_summary_dark_pcomp$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
+dark_calc_pcomp <- ggplot(joined_summary_dark_pcomp, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_calc - se_calc, ymax = mean_calc + se_calc, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(-2, 10, by = 0.2)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); dark_calc_pcomp
+
+ggsave("../output/02-Physiology/Calcification/Calcification_dark_KBay_Pcomp.png", 
+       plot = dark_calc_pcomp, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/Calcification/Calcification_dark_KBay_Pcomp.pdf", 
+       plot = dark_calc_pcomp, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+```
 
 
 
