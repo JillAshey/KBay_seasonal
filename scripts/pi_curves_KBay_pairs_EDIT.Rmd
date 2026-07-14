@@ -2949,6 +2949,236 @@ ggsave("../output/02-Physiology/PI_curves/Pmax_KBay.pdf",
        plot = pmax_plot, width = 20, height = 10, units = "in", device = "pdf", dpi = 300)
 ```
 
+Plot separately by spp 
+```{r}
+### Mcap 
+pmax_summary_mcap <- pmax_summary %>%
+  filter(Species == "Montipora capitata")
+
+# Set levels 
+pmax_summary_mcap$Timepoint <- factor(pmax_summary_mcap$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Maximum photosynthesis (", mu, "mol O"[2], " ", cm^-2, " ", hr^-1, ")")))
+pmax_plot_mcap <- ggplot(pmax_summary_mcap, aes(x = Timepoint, y = mean_pmax, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_pmax - se_pmax, ymax = mean_pmax + se_pmax, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 4.5, by = 0.5)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); pmax_plot_mcap
+
+ggsave("../output/02-Physiology/PI_curves/Pmax_KBay_Mcap.png", 
+       plot = pmax_plot_mcap, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/Pmax_KBay_Mcap.pdf", 
+       plot = pmax_plot_mcap, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+pmax_summary_pcomp <- pmax_summary %>%
+  filter(Species == "Porites compressa")
+
+# Set levels 
+pmax_summary_pcomp$Timepoint <- factor(pmax_summary_pcomp$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(bold(paste("Maximum photosynthesis (", mu, "mol O"[2], " ", cm^-2, " ", hr^-1, ")")))
+pmax_plot_pcomp <- ggplot(pmax_summary_pcomp, aes(x = Timepoint, y = mean_pmax, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_pmax - se_pmax, ymax = mean_pmax + se_pmax, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 4.5, by = 0.5)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); pmax_plot_mcap
+
+ggsave("../output/02-Physiology/PI_curves/Pmax_KBay_Pcomp.png", 
+       plot = pmax_plot_pcomp, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/Pmax_KBay_Pcomp.pdf", 
+       plot = pmax_plot_pcomp, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+```
+Average across season
+```{r}
+pmax_season_summary <- all_time_pi_metrics %>%
+  mutate(Season = case_when(
+    Timepoint == "April 2023" ~ "Spring",
+    Timepoint == "September 2023" ~ "Fall",
+    Timepoint == "January 2024" ~ "Winter",
+    Timepoint == "May 2024" ~ "Spring", 
+    Timepoint == "October 2024" ~ "Fall",
+    Timepoint == "January 2025" ~ "Winter", 
+    Timepoint == "May 2025" ~ "Spring",
+    Timepoint == "October 2025" ~ "Fall", 
+    Timepoint == "January 2026" ~ "Winter",
+    Timepoint == "May 2026" ~ "Spring")) %>%
+  group_by(Season, Phenotype, Species) %>%
+  summarise(
+    mean_pmax = mean(Pmax, na.rm = TRUE),
+    sd_pmax = sd(Pmax, na.rm = T),
+    se_pmax = sd(Pmax, na.rm = T) / sqrt(length(Pmax)),
+    .groups = "drop") %>%
+  drop_na()
+```
+
+Plot across season by spp 
+```{r}
+### Mcap 
+pmax_season_summary_mcap <- pmax_season_summary %>%
+  filter(Species == "Montipora capitata")
+
+# Set levels 
+pmax_season_summary_mcap$Season <- factor(pmax_season_summary_mcap$Season, levels = c("Winter", "Spring", "Fall"))
+
+y_label <- expression(bold(paste("Maximum photosynthesis (", mu, "mol O"[2], " ", cm^-2, " ", hr^-1, ")")))
+pmax_season_plot_mcap <- ggplot(pmax_season_summary_mcap, aes(x = Season, y = mean_pmax, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_pmax - se_pmax, ymax = mean_pmax + se_pmax, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 4.5, by = 0.25)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(hjust = 0.5, vjust = 0, size = 20, color = "black"),
+    axis.text.y = element_text(size = 22, color = "black"),
+    axis.title.y = element_text(size = 24, face = "bold")
+); pmax_season_plot_mcap
+
+ggsave("../output/02-Physiology/PI_curves/Pmax_season_KBay_Mcap.png", 
+       plot = pmax_season_plot_mcap, width = 12, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/Pmax_season_KBay_Mcap.pdf", 
+       plot = pmax_season_plot_mcap, width = 12, height = 8, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+pmax_season_summary_pcomp <- pmax_season_summary %>%
+  filter(Species == "Porites compressa")
+
+# Set levels 
+pmax_season_summary_pcomp$Season <- factor(pmax_season_summary_pcomp$Season, levels = c("Winter", "Spring", "Fall"))
+
+y_label <- expression(bold(paste("Maximum photosynthesis (", mu, "mol O"[2], " ", cm^-2, " ", hr^-1, ")")))
+pmax_season_plot_pcomp <- ggplot(pmax_season_summary_pcomp, aes(x = Season, y = mean_pmax, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_pmax - se_pmax, ymax = mean_pmax + se_pmax, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(0, 4.5, by = 0.25)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(hjust = 0.5, vjust = 0, size = 20, color = "black"),
+    axis.text.y = element_text(size = 22, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); pmax_season_plot_pcomp
+
+ggsave("../output/02-Physiology/PI_curves/Pmax_season_KBay_Pcomp.png", 
+       plot = pmax_season_plot_pcomp, width = 12, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/Pmax_season_KBay_Pcomp.pdf", 
+       plot = pmax_season_plot_pcomp, width = 12, height = 8, units = "in", device = "pdf", dpi = 300)
+```
+
 Calculate mean, sem, and sd of Rd
 ```{r}
 rd_summary <- all_time_pi_metrics %>%
@@ -3017,6 +3247,244 @@ ggsave("../output/02-Physiology/PI_curves/LEDR_KBay.pdf",
        plot = rd_plot, width = 20, height = 10.5, units = "in", device = "pdf", dpi = 300)
 ```
 
+Plot separately by spp 
+```{r}
+### Mcap 
+rd_summary_mcap <- rd_summary %>%
+  filter(Species == "Montipora capitata")
+
+# Set levels 
+rd_summary_mcap$Timepoint <- factor(rd_summary_mcap$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(atop(
+    bold("Light-enhanced dark respiration"),
+    bold(paste("(", mu, "mol O"[2], " cm"^-2, " hr"^-1, ")"))))
+rd_plot_mcap <- ggplot(rd_summary_mcap, aes(x = Timepoint, y = mean_rd, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_rd - se_rd, ymax = mean_rd + se_rd, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(-0.3, -1.3, by = -0.2)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); rd_plot_mcap
+
+ggsave("../output/02-Physiology/PI_curves/LEDR_KBay_Mcap.png", 
+       plot = rd_plot_mcap, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/LEDR_KBay_Mcap.pdf", 
+       plot = rd_plot_mcap, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+rd_summary_pcomp <- rd_summary %>%
+  filter(Species == "Porites compressa")
+
+# Set levels 
+rd_summary_pcomp$Timepoint <- factor(rd_summary_pcomp$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026"))
+
+y_label <- expression(atop(
+    bold("Light-enhanced dark respiration"),
+    bold(paste("(", mu, "mol O"[2], " cm"^-2, " hr"^-1, ")"))))
+rd_plot_pcomp <- ggplot(rd_summary_pcomp, aes(x = Timepoint, y = mean_rd, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_rd - se_rd, ymax = mean_rd + se_rd, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  scale_y_continuous(breaks = seq(-0.2, -1.8, by = -0.3)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20, color = "black"),
+    axis.text.y = element_text(size = 24, color = "black"),
+    axis.title.y = element_text(size = 26, face = "bold")
+); rd_plot_pcomp
+
+ggsave("../output/02-Physiology/PI_curves/LEDR_KBay_Pcomp.png", 
+       plot = rd_plot_pcomp, width = 15, height = 10, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/LEDR_KBay_Pcomp.pdf", 
+       plot = rd_plot_pcomp, width = 15, height = 10, units = "in", device = "pdf", dpi = 300)
+```
+
+Average across season
+```{r}
+rd_season_summary <- all_time_pi_metrics %>%
+  mutate(Season = case_when(
+    Timepoint == "April 2023" ~ "Spring",
+    Timepoint == "September 2023" ~ "Fall",
+    Timepoint == "January 2024" ~ "Winter",
+    Timepoint == "May 2024" ~ "Spring", 
+    Timepoint == "October 2024" ~ "Fall",
+    Timepoint == "January 2025" ~ "Winter", 
+    Timepoint == "May 2025" ~ "Spring",
+    Timepoint == "October 2025" ~ "Fall", 
+    Timepoint == "January 2026" ~ "Winter",
+    Timepoint == "May 2026" ~ "Spring")) %>%
+  group_by(Season, Phenotype, Species) %>%
+  summarise(
+    mean_rd = mean(Rd, na.rm = TRUE),
+    sd_rd = sd(Rd, na.rm = T),
+    se_rd = sd(Rd, na.rm = T) / sqrt(length(Rd)),
+    .groups = "drop") %>%
+  drop_na()
+```
+
+Plot across season by spp 
+```{r}
+### Mcap 
+rd_season_summary_mcap <- rd_season_summary %>%
+  filter(Species == "Montipora capitata")
+
+# Set levels 
+rd_season_summary_mcap$Season <- factor(rd_season_summary_mcap$Season, levels = c("Winter", "Spring", "Fall"))
+
+y_label <- expression(atop(
+    bold("Light-enhanced dark respiration"),
+    bold(paste("(", mu, "mol O"[2], " cm"^-2, " hr"^-1, ")"))))
+rd_season_plot_mcap <- ggplot(rd_season_summary_mcap, aes(x = Season, y = mean_rd, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_rd - se_rd, ymax = mean_rd + se_rd, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  #scale_y_continuous(breaks = seq(-0.3, -1.3, by = -0.2)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(hjust = 0.5, vjust = 0, size = 20, color = "black"),
+    axis.text.y = element_text(size = 22, color = "black"),
+    axis.title.y = element_text(size = 24, face = "bold")
+); rd_season_plot_mcap
+
+ggsave("../output/02-Physiology/PI_curves/LEDR_season_KBay_Mcap.png", 
+       plot = rd_season_plot_mcap, width = 12, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/LEDR_season_KBay_Mcap.pdf", 
+       plot = rd_season_plot_mcap, width = 12, height = 8, units = "in", device = "pdf", dpi = 300)
+
+### Pcomp 
+rd_season_summary_pcomp <- rd_season_summary %>%
+  filter(Species == "Porites compressa")
+
+# Set levels 
+rd_season_summary_pcomp$Season <- factor(rd_season_summary_pcomp$Season, levels = c("Winter", "Spring", "Fall"))
+
+y_label <- expression(atop(
+    bold("Light-enhanced dark respiration"),
+    bold(paste("(", mu, "mol O"[2], " cm"^-2, " hr"^-1, ")"))))
+rd_season_plot_pcomp <- ggplot(rd_season_summary_pcomp, aes(x = Season, y = mean_rd, color = Phenotype, group = Phenotype)) +
+  #geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 7) +
+  geom_errorbar(aes(ymin = mean_rd - se_rd, ymax = mean_rd + se_rd, color = Phenotype),
+                width = 0.4, linewidth = 1.8) +  # color matches points/lines
+  #facet_wrap(~ Species + Light) +
+  #facet_grid(cols = vars(Species)) +
+  #scale_y_continuous(breaks = seq(-0.3, -1.3, by = -0.2)) +
+  scale_color_manual(
+    values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
+  ) +
+  theme_classic() +  
+  labs(
+    x = "",
+    y = y_label,
+    color = "Phenotype"
+  ) +
+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    strip.background = element_rect(fill = "white", color = "black", linewidth = 1),
+    strip.text = element_text(face = "bold.italic", size = 24),
+    #legend.position = c(0.85, 0.83),  # adjust x, y for placement
+    legend.position = "right",
+    legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+    legend.key = element_blank(),    
+    legend.title = element_text(size = 18, face = "bold"),
+    legend.text = element_text(size = 17),
+    axis.text.x = element_text(hjust = 0.5, vjust = 0, size = 20, color = "black"),
+    axis.text.y = element_text(size = 22, color = "black"),
+    axis.title.y = element_text(size = 24, face = "bold")
+); rd_season_plot_pcomp
+
+ggsave("../output/02-Physiology/PI_curves/LEDR_season_KBay_Pcomp.png", 
+       plot = rd_season_plot_pcomp, width = 12, height = 8, units = "in", dpi = 300)
+ggsave("../output/02-Physiology/PI_curves/LEDR_season_KBay_Pcomp.pdf", 
+       plot = rd_season_plot_pcomp, width = 12, height = 8, units = "in", device = "pdf", dpi = 300)
+```
 
 #### Stats 
 
