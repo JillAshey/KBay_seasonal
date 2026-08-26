@@ -471,7 +471,9 @@ chl_plot_data <- chl_corrected %>%
     "January_2024", 
     "May_2024",
     "October_2024",
-    "January_2025"))) %>%
+    "January_2025",
+    "May_2025", 
+    "October_2025"))) %>%
   pivot_longer(
     cols = c(chla.ug.ml, chlc2.ug.ml),
     names_to = "Chlorophyll_Type",
@@ -523,7 +525,9 @@ chl_plot_data_norm <- chl_corrected %>%
     "January_2024", 
     "May_2024",
     "October_2024", 
-    "January_2025"))) %>%
+    "January_2025",
+    "May_2025", 
+    "October_2025"))) %>%
   pivot_longer(
     cols = c(chla.ug.cm2, chlc2.ug.cm2),
     names_to = "Chlorophyll_Type",
@@ -583,7 +587,9 @@ chl_summary$Timepoint <- factor(chl_summary$Timepoint, levels = c("April 2023",
                                                                         "January 2024", 
                                                                         "May 2024", 
                                                                         "October 2024", 
-                                                                        "January 2025"))
+                                                                        "January 2025", 
+                                                                        "May 2025", 
+                                                                        "October 2025"))
 
 y_label <- expression(bold(paste("Chlorophyll-a (", mu, "g ", cm^-2, ")")))
 chl_plot <- ggplot(chl_summary, aes(x = Timepoint, y = mean_chla, color = Phenotype, group = Phenotype)) +
@@ -708,8 +714,7 @@ afdw_summary <- afdw_processed %>%
     sd_afdw = sd(Tissue_Biomass_mg_cm2, na.rm = T),
     se_afdw = sd(Tissue_Biomass_mg_cm2, na.rm = T) / sqrt(length(Tissue_Biomass_mg_cm2)),
     .groups = "drop") %>%
-  drop_na() %>%
-  filter(!Timepoint == "May_2025")
+  drop_na()
 ```
 
 Plot! 
@@ -723,6 +728,7 @@ afdw_summary$Timepoint <- factor(afdw_summary$Timepoint, levels = c("April 2023"
                                                                         "May 2024", 
                                                                         "October 2024", 
                                                                         "January 2025", 
+                                                                        "May 2025",
                                                                         "October 2025"))
 
 y_label <- expression(bold(paste("Biomass (mg ",cm^-2, ")")))
@@ -809,7 +815,10 @@ prot_plot_data <- prot %>%
     "September_2023", 
     "January_2024", 
     "May_2024",
-    "October_2024"))) %>%
+    "October_2024",
+    "January_2025",
+    "May_2025",
+    "October_2025"))) %>%
   pivot_longer(
     cols = c(prot.mg.ml, mycro.mg.ml, paly.mg.ml, aster.mg.ml, shin.mg.ml),
     names_to = "Protein_Type",
@@ -866,7 +875,10 @@ prot_plot_data_norm <- prot %>%
     "September_2023", 
     "January_2024", 
     "May_2024",
-    "October_2024"))) %>%
+    "October_2024",
+    "January_2025",
+    "May_2025",
+    "October_2025"))) %>%
   pivot_longer(
     cols = c(prot.mg.cm2, mycro.mg.cm2, paly.mg.cm2, aster.mg.cm2, shin.mg.cm2),
     names_to = "Protein_Type",
@@ -929,7 +941,10 @@ prot_summary$Timepoint <- factor(prot_summary$Timepoint, levels = c("April 2023"
                                                                         "September 2023",
                                                                         "January 2024", 
                                                                         "May 2024", 
-                                                                        "October 2024"))
+                                                                        "October 2024",
+                                                                        "January 2025",
+                                                                        "May 2025",
+                                                                        "October 2025"))
 
 y_label <- expression(bold(paste("Protein (mg ",cm^-2, ")")))
 prot_plot <- ggplot(prot_summary, aes(x = Timepoint, y = mean_prot, color = Phenotype, group = Phenotype)) +
