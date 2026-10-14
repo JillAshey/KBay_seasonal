@@ -15,19 +15,34 @@ library(emmeans)
 library(lme4)
 ```
 
+Read in metadata
+```{r}
+# Load phenotype metadata
+meta <- read_csv("../data/02-Physiology/Pairs_metadata.csv")
+meta$ColonyID <- as.character(meta$ColonyID)
+```
+
+
 Read in PAM data 
 ```{r}
-pam <- read_csv("../data/02-Physiology/PAM/Master_datasheet_pam.csv")
+pam <- read_csv("../data/02-Physiology/PAM/PAM.csv")
+pam$ColonyID <- as.character(pam$ColonyID)
+```
+
+Merge pam and metadata
+```{r}
+pam <- pam %>%
+  inner_join(meta, by = "ColonyID")
 ```
 
 Calculate mean and sem 
 ```{r}
 pam_summary <- pam %>%
-  group_by(Date, Phenotype, Species, PAM_type) %>%
+  group_by(Timepoint, Phenotype, Species, PAM_type) %>%
   summarise(
-    mean_FvFm = mean(Fv_Fm, na.rm = TRUE),
-    sd_FvFm = sd(Fv_Fm, na.rm = TRUE),
-    sem_FvFm = sd(Fv_Fm, na.rm = TRUE) / sqrt(sum(!is.na(Fv_Fm))),
+    mean_FvFm = mean(Fv_Fm_Average, na.rm = TRUE),
+    sd_FvFm = sd(Fv_Fm_Average, na.rm = TRUE),
+    sem_FvFm = sd(Fv_Fm_Average, na.rm = TRUE) / sqrt(sum(!is.na(Fv_Fm_Average))),
     .groups = "drop"
   )
 ```
@@ -35,18 +50,14 @@ pam_summary <- pam %>%
 Plot! 
 ```{r}
 # Set levels 
-pam_summary$Date <- factor(pam_summary$Date, levels = c("September_2023", "January_2024", "May_2024", "October_2024", "January_2025", "May_2025", "October_2025", "January_2026"))
+pam_summary$Timepoint <- factor(pam_summary$Timepoint, levels = c("September 2023", "January 2024", "May 2024", "October 2024", "January 2025", "May 2025", "October 2025", "January 2026", "May 2026"))
 
-# Set spp names 
-species_labels <- c("Mcap" = "Montipora capitata", "Pcomp" = "Porites compressa")
-
-ggplot(pam_summary, aes(x = Date, y = mean_FvFm, color = Phenotype, group = Phenotype, shape = PAM_type)) +
+ggplot(pam_summary, aes(x = Timepoint, y = mean_FvFm, color = Phenotype, group = Phenotype, shape = PAM_type)) +
   geom_line(linewidth = 1) +
   geom_point(size = 3) +
   geom_errorbar(aes(ymin = mean_FvFm - sem_FvFm, ymax = mean_FvFm + sem_FvFm, color = Phenotype),
                 width = 0.3, linewidth = 0.8) +  # color matches points/lines
-  facet_wrap(~ Species, 
-             labeller = labeller(Species = species_labels)) +
+  facet_wrap(~ Species) +
   scale_color_manual(
     values = c("Resistant" = "#4b294fff", "Susceptible" = "#f3a17dff")
   ) +

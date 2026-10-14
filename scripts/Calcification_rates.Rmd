@@ -25,6 +25,11 @@ Read in wax surface area data
 ```{r}
 surface_area <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
 surface_area$ColonyID <- as.character(surface_area$ColonyID)
+
+# Subset specific columns
+surface_area <- surface_area %>%
+  select(ColonyID, surface.area.cm2, Timepoint)
+surface_area$Timepoint <- gsub("_", " ", surface_area$Timepoint)
 ```
 
 Read in data 
@@ -42,16 +47,17 @@ Add Timepoint as a column
 ```{r}
 calc <- calc %>%
   mutate(Timepoint = case_when(
-    grepl("2023-04", Date) ~ "April_2023",
-    grepl("2023-09", Date) ~ "September_2023",
-    grepl("2024-01", Date) ~ "January_2024",
-    grepl("2024-05", Date) ~ "May_2024",
-    grepl("2024-10", Date) ~ "October_2024",
-    grepl("2025-01", Date) ~ "January_2025",
-    grepl("2025-05", Date) ~ "May_2025",
-    grepl("2025-10", Date) ~ "October_2025",
-    grepl("2026-01", Date) ~ "January_2026",
-    grepl("2026-05", Date) ~ "May_2026",
+    grepl("2023-04", Date) ~ "April 2023",
+    grepl("2023-09", Date) ~ "September 2023",
+    grepl("2024-01", Date) ~ "January 2024",
+    grepl("2024-05", Date) ~ "May 2024",
+    grepl("2024-10", Date) ~ "October 2024",
+    grepl("2025-01", Date) ~ "January 2025",
+    grepl("2025-05", Date) ~ "May 2025",
+    grepl("2025-10", Date) ~ "October 2025",
+    grepl("2026-01", Date) ~ "January 2026",
+    grepl("2026-05", Date) ~ "May 2026",
+    grepl("2026-10", Date) ~ "October 2026",
     TRUE ~ NA_character_))
 ```
 
@@ -81,10 +87,10 @@ blank_delta_ta <- calc %>%
 
 # Add manual substitutions for missing timepoints
 blank_subs <- tibble(
-  Timepoint = c("April_2023", "September_2023"),
+  Timepoint = c("April 2023", "September 2023"),
   mean_blank_delta_ta = c(
-    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "May_2024"],
-    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "October_2024"]
+    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "May 2024"],
+    blank_delta_ta$mean_blank_delta_ta[blank_delta_ta$Timepoint == "October 2024"]
   )
 )
 
@@ -108,26 +114,13 @@ calc <- calc %>%
   filter(!is.na(Net_Calcification) & !is.nan(Net_Calcification))
 ```
 
-Read in wax surface area data 
-```{r}
-surface_area <- read.csv("../output/02-Physiology/SurfaceArea/SurfaceArea_wax_calculations.csv")
-surface_area$ColonyID <- as.character(surface_area$ColonyID)
-
-# Subset specific columns
-surface_area <- surface_area %>%
-  select(ColonyID, Species, Phenotype, surface.area.cm2, Timepoint)
-
-#surface_area <- surface_area %>%
-#  select(ColonyID, Species, Phenotype)
-```
-
 Join dfs 
 ```{r}
 joined <- calc %>%
   full_join(surface_area, by = c("ColonyID", "Timepoint")) %>%
   mutate(surface.area.cm2 = ifelse(is.na(surface.area.cm2), 10, surface.area.cm2)) %>%
   filter(ColonyID != "blank" & !is.na(ColonyID)) %>%
-  rename(Phenotype = Phenotype.x, Species = Species.x) %>%
+  #rename(Phenotype = Phenotype.x, Species = Species.x) %>%
   select(Date, Timepoint, Light, ColonyID, Species, Phenotype, Net_Calcification, surface.area.cm2)
 
 #joined <- calc %>%
@@ -162,16 +155,17 @@ joined_summary <- joined %>%
 Plot! 
 ```{r}
 # Set levels 
-joined_summary$Timepoint <- factor(joined_summary$Timepoint, levels = c("April_2023",
-                                                                        "September_2023",
-                                                                        "January_2024", 
-                                                                        "May_2024", 
-                                                                        "October_2024", 
-                                                                        "January_2025", 
-                                                                        "May_2025",
-                                                                        "October_2025",
-                                                                        "January_2026",
-                                                                        "May_2026"))
+joined_summary$Timepoint <- factor(joined_summary$Timepoint, levels = c("April 2023",
+                                                                        "September 2023",
+                                                                        "January 2024", 
+                                                                        "May 2024", 
+                                                                        "October 2024", 
+                                                                        "January 2025", 
+                                                                        "May 2025",
+                                                                        "October 2025",
+                                                                        "January 2026",
+                                                                        "May 2026",
+                                                                        "October 2026"))
 
 ggplot(joined_summary, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey", size = 1) +
@@ -211,8 +205,6 @@ Plot light only
 joined_summary_light <- joined_summary %>%
   filter(Light == "Light")
 
-joined_summary_light$Timepoint <- gsub("_", " ", joined_summary_light$Timepoint)
-
 # Set levels 
 joined_summary_light$Timepoint <- factor(joined_summary_light$Timepoint, levels = c("April 2023",
                                                                         "September 2023",
@@ -223,7 +215,8 @@ joined_summary_light$Timepoint <- factor(joined_summary_light$Timepoint, levels 
                                                                         "May 2025",
                                                                         "October 2025",
                                                                         "January 2026",
-                                                                        "May 2026"))
+                                                                        "May 2026",
+                                                                        "October 2026"))
 
 y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
 light_calc <- ggplot(joined_summary_light, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
@@ -505,8 +498,6 @@ Plot dark only
 joined_summary_dark <- joined_summary %>%
   filter(Light == "Dark")
 
-joined_summary_dark$Timepoint <- gsub("_", " ", joined_summary_dark$Timepoint)
-
 # Set levels 
 joined_summary_dark$Timepoint <- factor(joined_summary_dark$Timepoint, levels = c("April 2023",
                                                                         "September 2023",
@@ -517,7 +508,8 @@ joined_summary_dark$Timepoint <- factor(joined_summary_dark$Timepoint, levels = 
                                                                         "May 2025",
                                                                         "October 2025",
                                                                         "January 2026",
-                                                                        "May 2026"))
+                                                                        "May 2026",
+                                                                        "October 2026"))
 
 y_label <- expression(bold(paste("Net calcification (", mu, "mol ", cm^-2, " ", hr^-1, ")")))
 dark_calc <- ggplot(joined_summary_dark, aes(x = Timepoint, y = mean_calc, color = Phenotype, group = Phenotype)) +
