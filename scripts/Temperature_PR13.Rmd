@@ -18,6 +18,7 @@ library(purrr)
 library(zoo)
 library(scales)
 library(patchwork)
+library(naniar)
 ```
 
 Read in data from 2013-2023 (data obtained from Brown et al. 2023 - https://www.bco-dmo.org/dataset/905047)
@@ -166,6 +167,242 @@ ggplot() +
   theme_minimal()
 
 ```
+
+Crop from July 2019 to April 2022
+```{r}
+temps_sub <- temps %>%
+  filter(date > "2019-07-01") %>%
+  filter(date < "2022-04-01")
+daily_mean_sub <- daily_mean %>%
+  filter(date > "2019-07-01") %>%
+  filter(date < "2022-04-01")
+
+# Plot
+ggplot() +
+  # Hourly temperatures as light blue semi-transparent dots
+  geom_point(data = temps_sub, aes(x = datetime, y = Temperature), color = "grey60", alpha = 0.3, size = 0.5) +
+  
+  # DHW as gray line scaled to temperature y-axis limits (20-30)
+  geom_line(data = daily_mean_sub, aes(x = datetime, 
+                                   y = DHW * (30 - 20) / (10 - 0) + 20), 
+            color = "firebrick", size = 1, alpha = 0.7) +
+  
+  # Horizontal lines for MMM and Bleaching Threshold
+  geom_hline(yintercept = MMM, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = threshold, linetype = "solid", color = "black") +
+  
+  # Primary y-axis limits and secondary axis that maps 20-30 temp to 0-10 DHW
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      trans = ~ (. - 20) * 10 / (30 - 20),
+      name = "Degree Heating Weeks (°C wk⁻¹)",
+      breaks = seq(0, 10, 1)
+    )
+  ) +
+  theme_classic()
+
+```
+
+Some data missing from 2019 and 2021. Supplement with temps from HIMB station
+```{r}
+temp_2019 <- read.table("../data/01-Environmental/mokh1h2019.txt", sep = "", skip = 0, header = F, na.strings = "NA")[,c(1:4, 15)]
+temp_2020 <- read.table("../data/01-Environmental/mokh1h2020.txt", sep = "", skip = 0, header = F, na.strings = "NA")[,c(1:4, 15)]
+temp_2021 <- read.table("../data/01-Environmental/mokh1h2021.txt", sep = "", skip = 0, header = F, na.strings = "NA")[,c(1:4, 15)]
+temp_2022 <- read.table("../data/01-Environmental/mokh1h2022.txt", sep = "", skip = 0, header = F, na.strings = "NA")[,c(1:4, 15)]
+colnames(temp_2019) <- colnames(temp_2020) <- colnames(temp_2021) <- colnames(temp_2022) <- c("year", "month", "day", "hour", "Temperature")
+
+# Bind data together 
+mokh_temps <- bind_rows(temp_2019, temp_2020, temp_2021, temp_2022) %>%
+  replace_with_na(replace = list(Temperature = c("MM", "9   9.", ".0 999", "999", "0 999.", "999.0"))) %>%
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    hour = as.integer(hour),
+    Temperature = as.numeric(Temperature),
+    datetime = as.POSIXct(sprintf("%d-%02d-%02d %02d:00:00", year, month, day, hour), tz = "UTC")
+  )
+
+# Ensure temps_sub datetime formatting matches
+temps_sub <- temps_sub %>%
+  mutate(
+    Temperature = as.numeric(Temperature),
+    datetime = as.POSIXct(sprintf("%d-%02d-%02d %02d:00:00", year, month, day, hour), tz = "UTC")
+  )
+```
+
+Identify missing rows 
+```{r}
+missing_rows <- mokh_temps %>%
+     anti_join(temps_sub,
+               by = c("year", "month", "day", "hour"))
+```
+
+Append the subset data
+```{r}
+temps_sub_filled <- temps_sub %>%
+  bind_rows(
+    missing_rows %>%
+      transmute(
+        Temperature = Temperature,
+        hour        = hour,
+        year        = year,
+        month       = month,
+        day         = day,
+        datetime    = as.POSIXct(
+          sprintf("%d-%02d-%02d %02d:00:00", year, month, day, hour),
+          tz = "UTC"))) %>%
+  arrange(year, month, day, hour)
+```
+
+Calculate DHW
+```{r}
+MMM <- 27.3
+threshold <- MMM + 1 # 28.3
+
+daily_mean <- temps_sub_filled %>%
+  group_by(year, month, day) %>%
+  dplyr::summarize(daily_temp_mean = mean(Temperature, na.rm = T)) %>%
+  ungroup() %>%
+  dplyr::arrange(year, month, day) %>%
+  mutate(
+    date = as.Date(paste(year, month, day, sep = "-")),
+    HS = ifelse(daily_temp_mean >= threshold, daily_temp_mean - MMM, 0)
+  )
+
+# Check if dates are continuous:
+date_seq <- seq(min(daily_mean$date), max(daily_mean$date), by = "day")
+missing_dates <- setdiff(date_seq, daily_mean$date)
+
+if(length(missing_dates) > 0) {
+  # Fill missing dates with HS = 0, daily_temp_mean = NA or interpolated
+  missing_df <- data.frame(
+    year = as.integer(format(missing_dates, "%Y")),
+    month = as.integer(format(missing_dates, "%m")),
+    day = as.integer(format(missing_dates, "%d")),
+    daily_temp_mean = NA,
+    date = missing_dates,
+    HS = 0
+  )
+  daily_mean <- bind_rows(daily_mean, missing_df) %>%
+    arrange(date)
+}
+
+# Now compute rolling DHW (90-day window)
+daily_mean <- daily_mean %>%
+  mutate(DHW = rollapply(HS / 7, width = 90, sum, align = "right", fill = NA))
+```
+
+Plot! 
+```{r}
+# 1. Filter data to the requested date range (July 1, 2019 to April 1, 2022)
+start_date <- as.POSIXct("2019-07-01", tz = "UTC")
+end_date   <- as.POSIXct("2022-04-01", tz = "UTC")
+
+# Daily min/max summary for the temperature shading
+daily_range <- temps_sub_filled %>%
+  filter(datetime >= start_date & datetime <= end_date) %>%
+  mutate(date = as.Date(datetime)) %>%
+  group_by(date) %>%
+  summarise(
+    temp_min = min(Temperature, na.rm = TRUE),
+    temp_max = max(Temperature, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(datetime = as.POSIXct(date, format = "%Y-%m-%d", tz = "UTC"))
+
+# Filter daily mean and DHW data frames
+daily_mean_filtered <- daily_mean %>%
+  mutate(date = as.Date(paste(year, month, day, sep = "-"))) %>%
+  mutate(datetime = as.POSIXct(date, format = "%Y-%m-%d", tz = "UTC")) %>%
+  filter(datetime >= start_date & datetime <= end_date)
+
+daily_mean_sub_filtered <- daily_mean_sub %>%
+  filter(datetime >= start_date & datetime <= end_date)
+
+# Vertical line date markers
+vline_red  <- as.POSIXct("2019-10-01", tz = "UTC")
+vline_blue <- as.POSIXct("2022-03-01", tz = "UTC")
+
+marker_dates <- data.frame(
+  datetime = c(as.POSIXct("2019-10-01", tz = "UTC"), as.POSIXct("2022-03-01", tz = "UTC")),
+  color = c("red", "blue"),
+  label = c("Oct 2019", "Mar 2022")
+)
+
+# Merge with daily mean to place diamonds right on the temperature curve
+marker_points <- marker_dates %>%
+  left_join(daily_mean_filtered, by = "datetime")
+
+# 2. Plot
+ggplot() +
+  # Requirement 4: Grey DHW line with shading underneath (fill down to y = 20, corresponding to 0 DHW)
+  geom_ribbon(data = daily_mean_sub_filtered, 
+              aes(x = datetime, ymin = 20, ymax = DHW * (30 - 20) / (10 - 0) + 20),
+              fill = "grey70", alpha = 0.4) +
+  geom_line(data = daily_mean_sub_filtered, 
+            aes(x = datetime, y = DHW * (30 - 20) / (10 - 0) + 20), 
+            color = "grey50", linewidth = 0.8) +
+
+  # Requirement 1: Temperature shading (min/max daily range) with daily mean line
+  geom_ribbon(data = daily_range, 
+              aes(x = datetime, ymin = temp_min, ymax = temp_max), 
+              fill = "grey60", alpha = 0.4) +
+  geom_line(data = daily_mean_filtered, 
+            aes(x = datetime, y = daily_temp_mean), 
+            color = "black", linewidth = 0.8) +
+  
+  # Horizontal reference lines
+  geom_hline(yintercept = MMM, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = threshold, linetype = "solid", color = "black") +
+
+# OPTION A: Clean, subtle dashed vertical lines
+  geom_vline(xintercept = marker_dates$datetime[1], color = "firebrick", linetype = "dashed", linewidth = 0.7) +
+  geom_vline(xintercept = marker_dates$datetime[2], color = "royalblue", linetype = "dashed", linewidth = 0.7) +
+
+  # OPTION B: Diamond shape markers placed directly on the mean curve
+  #geom_point(data = marker_points, aes(x = datetime, y = daily_temp_mean), 
+  #           color = marker_points$color, shape = 18, size = 4.5) +
+  # Formatted X-Axis (Every 2 Months, Angled, "July 2019")
+  scale_x_datetime(
+    limits = c(start_date, end_date),
+    breaks = seq.POSIXt(start_date, end_date, by = "2 months"),
+    labels = date_format("%B %Y"),
+    expand = c(0.01, 0.01)
+  ) +
+  xlab("") +
+  # Requirement 2 & 4: Axis limits & Fix right axis label symbol (using unicode \u207b\u00b9 for -1)
+  #scale_x_datetime(limits = c(start_date, end_date), expand = c(0, 0)) +
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      trans = ~ (. - 20) * 10 / (30 - 20),
+      name = expression("Degree Heating Weeks ("*degree*"C wk"^-1*")"),      breaks = seq(0, 10, 1)
+    )
+  ) +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, color = "black"),
+    axis.text.y = element_text(color = "black")
+  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Calculate monthly means across non-heatwave years
 ```{r}
