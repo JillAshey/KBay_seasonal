@@ -39,6 +39,258 @@ ggplot(temps, aes(x = date, y = Temperature, color = Site)) +
   theme_minimal()
 ```
 
+Read in temp hot spot data 
+```{r}
+DHW <- read.csv("../data/01-Environmental/Reef13 temp hotspot through 2023.csv", header = T)
+DHW$Date <- as.Date(DHW$Date, format = "%m/%d/%Y")
+```
+
+Plot 
+```{r}
+DHWfigKBay<-ggplot(DHW, aes(y=DHW, x=Date))+
+  geom_line(aes(y=DHW, x=Date), size=0.75, color="grey10", alpha=0.8)+
+  geom_area(aes(y=DHW),fill="grey",alpha=0.6) +
+  scale_y_continuous(expression(Degree~Heating~Weeks~(degree~C~wk^{-1})),)+
+  scale_x_date(limits=as.Date(c("2014-01-01","2023-09-19")),date_breaks= "1 year",date_labels = "%Y", expand=c(0.015,0.015))+
+  #scale_x_date(date_breaks= "1 year",date_labels = "%Y")+
+  theme_classic()+
+  theme(axis.text.x=element_text(hjust=0.5, size=12),
+        plot.title = element_text(margin = margin(t = 10, b = -20), hjust=0.7),
+        panel.background= element_rect(fill=NA, color='black'),
+        axis.text.y = element_text(vjust=0.5, size=12), 
+        axis.title.x = element_text(vjust=0.5, size=12),
+        axis.title.y = element_text(vjust=0.5, size=12))
+        #legend.position = 'none')
+
+DHWfigKBay
+
+library(ggplot2)
+
+# 1. Ensure Date is formatted and filter the data for July 2019 – April 2022
+DHW$Date <- as.Date(DHW$Date)
+DHW_filtered <- subset(DHW, Date >= as.Date("2019-07-01") & Date <= as.Date("2022-04-30"))
+
+ggplot(DHW_filtered, aes(x = Date)) +
+  # 2. DHW Shaded Area at the bottom (scaled +20 to align with the left axis)
+  geom_ribbon(aes(ymin = 20, ymax = DHW + 20), fill = "grey80", color = "grey50", alpha = 0.6) +
+  
+  # 3. Temperature SE shadow ribbon
+  geom_ribbon(aes(ymin = Temperature - se, ymax = Temperature + se), fill = "#2171b5", alpha = 0.2) +
+  
+  # 4. Mean Temperature solid line
+  geom_line(aes(y = Temperature), color = "#08306b", size = 0.9) +
+  
+  # 5. Primary and Secondary Y-Axes setup
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 32),
+    breaks = seq(20, 32, by = 2),
+    sec.axis = sec_axis(~ . - 20, name = expression(paste("Degree heating weeks (", degree, "C wk"^-1, ")")),
+                        breaks = seq(0, 12, by = 4))
+  ) +
+  
+  # 6. Clean publication theme styling
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.y.right = element_text(angle = 90, vjust = 0.5)
+  )
+
+library(ggplot2)
+library(dplyr)
+
+# 1. Filter and create a gap-detection grouping variable
+DHW$Date <- as.Date(DHW$Date)
+DHW_filtered <- DHW %>%
+  filter(Date >= as.Date("2019-07-01") & Date <= as.Date("2022-04-30")) %>%
+  arrange(Date) %>%
+  mutate(
+    date_diff = c(1, diff(Date)),
+    # Creates a new group whenever there's a gap greater than 2 days
+    line_group = cumsum(date_diff > 2) 
+  )
+
+# 2. Plot with the group aesthetic
+ggplot(DHW_filtered, aes(x = Date)) +
+  # DHW Shaded Area at the bottom
+  geom_ribbon(aes(ymin = 20, ymax = DHW + 20), fill = "grey80", color = "grey50", alpha = 0.6) +
+  
+  # Temperature SE shadow ribbon (using the same group to break cleanly)
+  geom_ribbon(aes(ymin = Temperature - sd, ymax = Temperature + sd, group = line_group), fill = "#2171b5", alpha = 0.2) +
+  
+  # Mean Temperature solid line (using group = line_group to prevent bridging gaps)
+  geom_line(aes(y = Temperature, group = line_group), color = "#08306b", size = 0.9) +
+  
+  # Primary and Secondary Y-Axes setup
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 32),
+    breaks = seq(20, 32, by = 2),
+    sec.axis = sec_axis(~ . - 20, name = expression(paste("Degree heating weeks (", degree, "C wk"^-1, ")")),
+                        breaks = seq(0, 12, by = 4))
+  ) +
+  
+  # Clean publication theme styling
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.y.right = element_text(angle = 90, vjust = 0.5)
+  )
+```
+
+Some data missing from 2019 and 2021. Supplement with temps from HIMB station
+```{r}
+# 1. Load each year explicitly, ensuring all columns are read as character/numeric safely
+load_year <- function(filepath) {
+  df <- read.table(filepath, fill = TRUE, header = FALSE, stringsAsFactors = FALSE)
+  data.frame(
+    year = as.integer(df[, 1]),
+    month = as.integer(df[, 2]),
+    day = as.integer(df[, 3]),
+    hour = as.integer(df[, 4]),
+    Temperature = as.character(df[, 15]) # Column 15
+  )
+}
+
+temp_2019 <- load_year("../data/01-Environmental/mokh1h2019.txt")
+temp_2020 <- load_year("../data/01-Environmental/mokh1h2020.txt")
+temp_2021 <- load_year("../data/01-Environmental/mokh1h2021.txt")
+temp_2022 <- load_year("../data/01-Environmental/mokh1h2022.txt")
+
+# 2. Bind and clean flags
+mokh_temps <- bind_rows(temp_2019, temp_2020, temp_2021, temp_2022) %>%
+  replace_with_na(replace = list(Temperature = c("MM", "9  9.", ".0 999", "999", "0 999.", "999.0", "-999", "-999.0", "-100.96", "99.99"))) %>%
+  mutate(
+    Temperature = as.numeric(Temperature),
+    Temperature = ifelse(Temperature < 10 | Temperature > 40, NA, Temperature),
+    datetime = as.POSIXct(sprintf("%d-%02d-%02d %02d:00:00", year, month, day, hour), tz = "UTC")
+  )
+
+# 3. Aggregate to daily means
+himb_daily <- mokh_temps %>%
+  mutate(Date = as.Date(datetime)) %>%
+  group_by(Date) %>%
+  summarise(
+    N = sum(!is.na(Temperature)),
+    Temperature = mean(Temperature, na.rm = TRUE),
+    sd = sd(Temperature, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    se = sd / sqrt(N),
+    ci = qt(0.975, df = pmax(1, N - 1)) * se,
+    Hotspot_27.3 = ifelse(Temperature > 27.3, Temperature - 27.3, 0),
+    DHW = 0
+  ) %>%
+  filter(N > 0)
+
+# 4. Merge with your Reef 13 DHW data
+DHW$Date <- as.Date(DHW$Date)
+
+combined_DHW <- DHW %>%
+  mutate(Temperature = ifelse(Temperature < 10, NA, Temperature)) %>%
+  full_join(himb_daily, by = "Date", suffix = c(".reef", ".himb")) %>%
+  mutate(
+    Temperature = coalesce(Temperature.reef, Temperature.himb),
+    N = coalesce(N.reef, N.himb),
+    sd = coalesce(sd.reef, sd.himb),
+    se = coalesce(se.reef, se.himb),
+    ci = coalesce(ci.reef, ci.himb),
+    Hotspot_27.3 = coalesce(Hotspot_27.3.reef, Hotspot_27.3.himb),
+    DHW = coalesce(DHW.reef, DHW.himb)
+  ) %>%
+  # REMOVE the strict sd == 0 filter because real winter days can have very low temperature variance,
+  # which was causing the HIMB patch data to be wiped out as NA!
+  mutate(
+    Temperature = ifelse(Temperature == -999 | Temperature == 24.0 & N > 20, NA, Temperature),
+    se = ifelse(is.na(Temperature), 0, se)
+  ) %>%
+  select(Date, N, Temperature, sd, se, ci, Hotspot_27.3, DHW) %>%
+  arrange(Date)
+
+combined_DHW$Date <- as.Date(combined_DHW$Date)
+DHW_filtered <- combined_DHW %>%
+  filter(Date >= as.Date("2019-07-01") & Date <= as.Date("2022-04-30")) %>%
+  arrange(Date) %>%
+  mutate(
+    date_diff = c(1, diff(Date)),
+    # Creates a new group whenever there's a gap greater than 2 days
+    line_group = cumsum(date_diff > 2) 
+  )
+
+start_date <- as.POSIXct("2019-07-01", tz = "UTC")
+end_date   <- as.POSIXct("2022-04-01", tz = "UTC")
+
+# Vertical line date markers
+vline_red  <- as.POSIXct("2019-10-01", tz = "UTC")
+vline_blue <- as.POSIXct("2022-03-01", tz = "UTC")
+
+marker_dates <- data.frame(
+  datetime = c(as.POSIXct("2019-10-01", tz = "UTC"), as.POSIXct("2022-03-01", tz = "UTC")),
+  color = c("red", "blue"),
+  label = c("Oct 2019", "Mar 2022")
+)
+
+ggplot(DHW_filtered, aes(x = Date)) +
+  # DHW Shaded Area at the bottom
+  geom_ribbon(aes(ymin = 20, ymax = DHW + 20), fill = "grey70", color = "grey50", alpha = 0.4) +
+  
+  # Temperature SE shadow ribbon (using the same group to break cleanly)
+  geom_ribbon(aes(ymin = Temperature - sd, ymax = Temperature + sd, group = line_group), fill = "grey60", alpha = 0.4) +
+  
+  # Mean Temperature solid line (using group = line_group to prevent bridging gaps)
+  geom_line(aes(y = Temperature, group = line_group), color = "black", size = 0.8) +
+  
+  # Primary and Secondary Y-Axes setup
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    breaks = seq(20, 30, by = 2),
+    sec.axis = sec_axis(~ . - 20, name = expression(paste("Degree heating weeks (", degree, "C wk"^-1, ")")),
+                        breaks = seq(0, 10, by = 1))
+  ) +
+    scale_x_datetime(
+    limits = c(start_date, end_date),
+    breaks = seq.POSIXt(start_date, end_date, by = "2 months"),
+    labels = date_format("%B %Y"),
+    expand = c(0.01, 0.01)
+  ) +
+  xlab("")+
+  geom_hline(yintercept = 27.3, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 28.3, linetype = "solid", color = "black") +
+    geom_vline(xintercept = marker_dates$datetime[1], color = "firebrick", linetype = "dashed", linewidth = 0.7) +
+  geom_vline(xintercept = marker_dates$datetime[2], color = "royalblue", linetype = "dashed", linewidth = 0.7) +
+
+  # Clean publication theme styling
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.y.right = element_text(angle = 90, vjust = 0.5)
+  )+
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, color = "black", size = 11),
+    axis.text.y = element_text(color = "black", size = 12),
+    axis.title.y = element_text(size = 13)
+  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Calculate DHW
 ```{r}
 MMM <- 27.3
@@ -389,6 +641,325 @@ ggplot() +
     axis.text.y = element_text(color = "black")
   )
 ```
+
+Try to adjust my code to Kristen's
+```{r}
+library(tidyverse)
+library(lubridate)
+library(zoo)
+
+MMM <- 27.3
+threshold <- MMM + 1
+
+# Original temperature dataset
+temps_main <- temps %>%
+  mutate(
+    datetime = make_datetime(
+      year, month, day, hour,
+      tz = "UTC"
+    ),
+    Temperature = as.numeric(Temperature),
+    source = as.character(Site)
+  ) %>%
+  select(datetime, source, Temperature)
+
+# Combine all appropriate temperature sources
+# Add PR12 and CRIMP2 here once loaded.
+
+temps_all <- temps_main %>%
+  arrange(datetime, source)
+
+# Calculate daily mean for each source separately
+
+daily_by_source <- temps_all %>%
+  mutate(date = as.Date(datetime)) %>%
+  group_by(date, source) %>%
+  summarise(
+    daily_temp = mean(Temperature, na.rm = TRUE),
+    n_hours = sum(!is.na(Temperature)),
+    .groups = "drop"
+  )
+
+daily_mean <- daily_by_source %>%
+  group_by(date) %>%
+  summarise(
+    daily_temp_mean = if (
+      all(is.na(daily_temp))
+    ) {
+      NA_real_
+    } else {
+      mean(daily_temp, na.rm = TRUE)
+    },
+    n_sources = sum(!is.na(daily_temp)),
+    .groups = "drop"
+  )
+
+# Create a complete daily date sequence
+daily_mean <- daily_mean %>%
+  complete(
+    date = seq(
+      min(date),
+      max(date),
+      by = "day"
+    )
+  ) %>%
+  arrange(date)
+
+# Calculate hotspots
+daily_mean <- daily_mean %>%
+  mutate(
+    HS = case_when(
+      is.na(daily_temp_mean) ~ NA_real_,
+      daily_temp_mean >= threshold ~
+        daily_temp_mean - MMM,
+      TRUE ~ 0
+    )
+  )
+
+# Calculate rolling 90-day DHW
+daily_mean <- daily_mean %>%
+  mutate(
+    DHW = rollapply(
+      HS / 7,
+      width = 90,
+      FUN = sum,
+      align = "right",
+      fill = NA_real_,
+      na.rm = FALSE
+    )
+  )
+
+start_date <- as.Date("2019-07-01")
+end_date <- as.Date("2022-04-01")
+
+daily_plot <- daily_mean %>%
+  filter(date >= start_date,
+         date <= end_date)
+
+ggplot(daily_plot, aes(x = date)) +
+
+  # DHW shading
+  geom_ribbon(
+    aes(
+      ymin = 20,
+      ymax = DHW + 20
+    ),
+    fill = "grey70",
+    alpha = 0.4
+  ) +
+
+  # DHW line
+  geom_line(
+    aes(y = DHW + 20),
+    color = "grey50",
+    linewidth = 0.8
+  ) +
+
+  # Daily mean temperature
+  geom_line(
+    aes(y = daily_temp_mean),
+    color = "black",
+    linewidth = 0.8
+  ) +
+
+  # Reference lines
+  geom_hline(
+    yintercept = MMM,
+    linetype = "dashed"
+  ) +
+
+  geom_hline(
+    yintercept = threshold,
+    linetype = "solid"
+  ) +
+
+  scale_y_continuous(
+    name = "Temperature (°C)",
+    limits = c(20, 30),
+    sec.axis = sec_axis(
+      ~ . - 20,
+      name = expression(
+        "Degree Heating Weeks (" *
+          degree * "C wk"^-1 * ")"
+      ),
+      breaks = seq(0, 10, 1)
+    )
+  ) +
+
+  scale_x_date(
+    date_breaks = "2 months",
+    date_labels = "%B %Y"
+  ) +
+
+  theme_classic() +
+
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    )
+  )
+```
+
+Trying again!
+```{r}
+library(tidyverse)
+library(lubridate)
+
+temps_hourly <- temps %>%
+  mutate(
+    datetime = make_datetime(
+      year, month, day, hour,
+      tz = "UTC"
+    ),
+    Temperature = as.numeric(Temperature)
+  ) %>%
+  group_by(Site, datetime) %>%
+  summarise(
+    Temperature = if (all(is.na(Temperature))) {
+      NA_real_
+    } else {
+      mean(Temperature, na.rm = TRUE)
+    },
+    .groups = "drop"
+  )
+
+# Create a complete hourly timeline for each source
+hourly_complete <- temps_hourly %>%
+  group_by(Site) %>%
+  complete(
+    datetime = seq(
+      min(datetime),
+      max(datetime),
+      by = "hour"
+    )
+  ) %>%
+  ungroup()
+
+# Quantify missing timestamps and temperatures
+hourly_complete %>%
+  group_by(Site) %>%
+  summarise(
+    first_date = min(datetime),
+    last_date = max(datetime),
+    expected_hours = n(),
+    valid_hours = sum(!is.na(Temperature)),
+    missing_hours = sum(is.na(Temperature)),
+    percent_complete = round(
+      100 * valid_hours / expected_hours, 2
+    ),
+    .groups = "drop"
+  )
+
+monthly_coverage <- hourly_complete %>%
+  mutate(month = floor_date(datetime, "month")) %>%
+  group_by(Site, month) %>%
+  summarise(
+    expected_hours = n(),
+    valid_hours = sum(!is.na(Temperature)),
+    percent_complete = round(
+      100 * valid_hours / expected_hours, 1
+    ),
+    .groups = "drop"
+  )
+
+ggplot(
+  monthly_coverage,
+  aes(x = month, y = Site, fill = percent_complete)
+) +
+  geom_tile() +
+  scale_fill_viridis_c(
+    name = "Data coverage (%)",
+    limits = c(0, 100)
+  ) +
+  labs(
+    x = NULL,
+    y = "Temperature source"
+  ) +
+  theme_classic()
+
+# Calculate daily mean temperature separately for each source
+
+daily_by_source <- hourly_complete %>%
+  mutate(date = as.Date(datetime)) %>%
+  group_by(date, Site) %>%
+  summarise(
+    daily_temp = if (all(is.na(Temperature))) {
+      NA_real_
+    } else {
+      mean(Temperature, na.rm = TRUE)
+    },
+    n_hours = sum(!is.na(Temperature)),
+    .groups = "drop"
+  )
+
+# Average daily temperatures across available sources
+
+daily_mean <- daily_by_source %>%
+  group_by(date) %>%
+  summarise(
+    daily_temp_mean = if (all(is.na(daily_temp))) {
+      NA_real_
+    } else {
+      mean(daily_temp, na.rm = TRUE)
+    },
+    n_sources = sum(!is.na(daily_temp)),
+    .groups = "drop"
+  ) %>%
+  arrange(date)
+
+MMM <- 27.3
+threshold <- MMM + 1
+
+daily_mean <- daily_mean %>%
+  mutate(
+    HS = case_when(
+      is.na(daily_temp_mean) ~ NA_real_,
+      daily_temp_mean >= threshold ~
+        daily_temp_mean - MMM,
+      TRUE ~ 0
+    )
+  )
+
+# Calculate 90-day rolling DHW
+daily_mean <- daily_mean %>%
+  mutate(
+    DHW = zoo::rollapply(
+      HS / 7,
+      width = 90,
+      FUN = sum,
+      align = "right",
+      fill = NA_real_
+    )
+  )
+
+# Plot daily means from each individual source
+
+ggplot(
+  daily_by_source,
+  aes(x = date, y = daily_temp, color = Site)
+) +
+  geom_line(linewidth = 0.4, alpha = 0.8) +
+  geom_hline(
+    yintercept = 28.3,
+    linetype = "dashed"
+  ) +
+  scale_color_manual(
+    values = c(
+      "CRIMP" = "steelblue",
+      "Reef12" = "darkgreen",
+      "Reef13" = "firebrick"
+    )
+  ) +
+  theme_classic() +
+  labs(
+    x = NULL,
+    y = "Daily mean temperature (°C)",
+    color = "Source"
+  )
+```
+
+
 
 
 
