@@ -212,7 +212,7 @@ combined_DHW <- DHW %>%
 
 combined_DHW$Date <- as.Date(combined_DHW$Date)
 DHW_filtered <- combined_DHW %>%
-  filter(Date >= as.Date("2019-07-01") & Date <= as.Date("2022-04-30")) %>%
+  filter(Date >= as.Date("2019-05-01") & Date <= as.Date("2022-04-30")) %>%
   arrange(Date) %>%
   mutate(
     date_diff = c(1, diff(Date)),
@@ -220,17 +220,17 @@ DHW_filtered <- combined_DHW %>%
     line_group = cumsum(date_diff > 2) 
   )
 
-start_date <- as.POSIXct("2019-07-01", tz = "UTC")
+start_date <- as.POSIXct("2019-05-01", tz = "UTC")
 end_date   <- as.POSIXct("2022-04-01", tz = "UTC")
 
 # Vertical line date markers
-vline_red  <- as.POSIXct("2019-10-01", tz = "UTC")
+vline_red  <- as.POSIXct("2019-07-01", tz = "UTC")
 vline_blue <- as.POSIXct("2022-03-01", tz = "UTC")
 
 marker_dates <- data.frame(
-  datetime = c(as.POSIXct("2019-10-01", tz = "UTC"), as.POSIXct("2022-03-01", tz = "UTC")),
+  datetime = c(as.POSIXct("2019-07-01", tz = "UTC"), as.POSIXct("2022-03-01", tz = "UTC")),
   color = c("red", "blue"),
-  label = c("Oct 2019", "Mar 2022")
+  label = c("Jul 2019", "Mar 2022")
 )
 
 ggplot(DHW_filtered, aes(x = Date)) +
