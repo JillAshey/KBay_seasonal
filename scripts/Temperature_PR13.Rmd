@@ -70,7 +70,7 @@ library(ggplot2)
 DHW$Date <- as.Date(DHW$Date)
 DHW_filtered <- subset(DHW, Date >= as.Date("2019-07-01") & Date <= as.Date("2022-04-30"))
 
-ggplot(DHW_filtered, aes(x = Date)) +
+ggplot(DHW, aes(x = Date)) +
   # 2. DHW Shaded Area at the bottom (scaled +20 to align with the left axis)
   geom_ribbon(aes(ymin = 20, ymax = DHW + 20), fill = "grey80", color = "grey50", alpha = 0.6) +
   
@@ -112,7 +112,7 @@ DHW_filtered <- DHW %>%
   )
 
 # 2. Plot with the group aesthetic
-ggplot(DHW_filtered, aes(x = Date)) +
+ggplot(DHW, aes(x = Date)) +
   # DHW Shaded Area at the bottom
   geom_ribbon(aes(ymin = 20, ymax = DHW + 20), fill = "grey80", color = "grey50", alpha = 0.6) +
   
@@ -212,7 +212,7 @@ combined_DHW <- DHW %>%
 
 combined_DHW$Date <- as.Date(combined_DHW$Date)
 DHW_filtered <- combined_DHW %>%
-  filter(Date >= as.Date("2019-05-01") & Date <= as.Date("2022-04-30")) %>%
+  filter(Date >= as.Date("2013-05-01") & Date <= as.Date("2026-04-30")) %>%
   arrange(Date) %>%
   mutate(
     date_diff = c(1, diff(Date)),
@@ -220,12 +220,12 @@ DHW_filtered <- combined_DHW %>%
     line_group = cumsum(date_diff > 2) 
   )
 
-start_date <- as.POSIXct("2019-05-01", tz = "UTC")
+start_date <- as.POSIXct("2013-05-01", tz = "UTC")
 end_date   <- as.POSIXct("2022-04-01", tz = "UTC")
 
 # Vertical line date markers
 vline_red  <- as.POSIXct("2019-07-01", tz = "UTC")
-vline_blue <- as.POSIXct("2022-03-01", tz = "UTC")
+vline_blue <- as.POSIXct("2026-03-01", tz = "UTC")
 
 marker_dates <- data.frame(
   datetime = c(as.POSIXct("2019-07-01", tz = "UTC"), as.POSIXct("2022-03-01", tz = "UTC")),
